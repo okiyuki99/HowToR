@@ -1,0 +1,223 @@
+---
+title: "日付・時間周りのR Tips"
+author: "Motoyuki Ooki"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+<div style="text-align: center;"> <b>R Tips about Date and Time</b> <br> 技術開発部(Technology Development) データプラットフォームTU(Data Platform TU) <br> E-mail：<dpf-td@ntt.com> </div>
+
+## 0. Summary
+- Rで日付系を触るときに参考になるスクリプトを目指します。
+- というか、ほぼ「型はPOSIXctにして、lubridateパッケージで適宜処理して下さい」ということを示しています。
+
+## 1. Preparation
+
+### 1-1. R packages Loading
+- lubridate Package：日付周りの処理を簡単にしてくれるライブラリです。
+
+```{r, load-package, message=FALSE}
+library(lubridate)
+```
+
+### 1-2. Set Knitr grobal option
+rmarkdown::html_vignetteのテンプレで作成されるため、記述する必要なし
+
+
+## 2. Date
+- Rの標準の日付型。できる範囲は50％くらいで使いづらい。
+
+### 2-1. Basic Operation
+```{r}
+as.Date("2011-06-04")
+as.Date("2011/06/04")
+# as.Date("20110604") これはエラーがでるので、以下のようにformatを指定する
+as.Date("20110604", format = "%Y%m%d")
+```
+
+## 3. POSIXct, POSIXlt
+- Rで時・分・秒をいじるなら、POSIX系を使いましょう。
+- 時・分・秒がなくてもPOSIXctに統一していくべきな気がします。
+- POSIXlt型のベクトルをdata.frameに追加すると、自動的にPOSIXctになる。
+    - POSIXctになると、hourだけを取ったりできなくなるので注意。これに最初はハマる。
+
+### 3-1. Basic Operation
+```{r}
+as.POSIXlt("2011-06-04 00:00:00")
+as.POSIXlt("2011/06/04 00:00:00")
+as.POSIXlt("2011/06/04")
+# ちゃんと書いたら以下の感じで
+as.POSIXlt("2011-06-04 06:30:10", tz="JST", format="%Y-%m-%d %H:%M:%S")
+```
+
+### 3-2. Extract Date and Time
+```{r}
+# 年（＋1900すること）
+as.POSIXlt("2011-06-04 10:50:40", tz="JST")$year + 1900
+# 月（0〜11で返ってくるので、＋１すること）
+as.POSIXlt("2011-06-04 10:50:40", tz="JST")$mon + 1
+# 日
+as.POSIXlt("2011-06-04 10:50:40")$mday
+# 時
+as.POSIXlt("2011-06-04 10:50:40")$hour
+# 分
+as.POSIXlt("2011-06-04 10:50:40")$min
+# 秒
+as.POSIXlt("2011-06-04 10:50:40")$sec
+```
+
+### 3-3. Trunc and Round 
+- 時間を丸め込む方法
+
+```{r}
+# 切り捨てで丸める
+as.POSIXct(trunc.POSIXt("2011-06-04 10:50:40", "day"))
+as.POSIXct(trunc.POSIXt("2011-06-04 10:50:40", "hour"))
+as.POSIXct(trunc.POSIXt("2011-06-04 10:50:40", "min"))
+as.POSIXct(trunc.POSIXt("2011-06-04 10:50:40", "sec"))
+
+# truncと同じような書き方がroundでもできるが、四捨五入的なのがされるので注意。
+round(as.POSIXct("2011-06-04 10:50:40"), "day")
+round(as.POSIXct("2011-06-04 10:50:40"), "hour")
+round(as.POSIXct("2011-06-04 10:50:40"), "min")
+round(as.POSIXct("2011-06-04 10:50:40"), "sec")
+```
+
+## 4. How to use lubridate Package
+- イケてる日付・時間処理パッケージ。
+- date, POSIXltよりも記述が楽で、シンプルで使いやすい。POSIXctから月だけを取ったりが容易。
+- POSIXct, POSIXtで返ってくるので、あとも楽
+- [Reference：Do more with dates and times in R with lubridate 1.1.0](http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/)
+
+### 4-1. Basic Operation
+- "年月日"のパースはとても楽
+
+```{r}
+# 2011年6月4日が"20110604"となっている場合
+ymd("20110604")
+# 2011年6月4日が"06-04-2011"となっている場合
+mdy("06-04-2011")
+# 2011年6月4日が"04/06/2011"となっている場合
+dmy("04/06/2011")
+```
+
+"時分秒"が入っててもパースが楽
+
+```{r}
+hms("12:30:40")
+ymd_hms("20110604 12:00:00", tz="JST")
+ymd_hms("2011-06-04 12:00:00", tz="JST")
+dmy_hms("04/06/2011 12:00:00", tz="JST")
+```
+
+### 4-2. Extract Date and Time
+- もちろん、POSIXctなのに、年・月・日・時・分・秒を抽出するのが容易です
+
+```{r}
+aaa <- ymd_hms("20110604 12:00:00", tz="JST")
+# 年
+year(aaa)
+# 月
+month(aaa)
+# 日
+day(aaa)
+# 時間
+hour(aaa)
+# 分
+minute(aaa)
+# 秒
+second(aaa)
+# 曜日、ただし、対応する数値で返ってくる
+wday(aaa)
+# 曜日、ただし、orderd factor型
+wday(aaa, label = TRUE)
+# 曜日、ただしcharacter型
+weekdays(aaa, abbreviate=TRUE)
+```
+
+### 4-3. Arithmetic with Date and Time
+- 時間で算術演算するのも楽です。
+- ただし、うるう年の場合、特別な処理が必要なので注意。詳しくは上記記事へ。
+
+```{r}
+# うるう年じゃない
+leap_year(2011)
+
+# 1年後
+ymd(20110101) + dyears(1)
+# 1ヶ月後
+# 関数としてはない？
+# 1日後
+ymd(20110101) + ddays(1)
+# 1時間後
+ymd(20110101) + dhours(1)
+# 1分後
+ymd(20110101) + dminutes(1)
+# 1秒後
+ymd(20110101) + dseconds(1)
+# 1週間後を5週先まで出力
+ymd(20110101) + weeks(0:5)
+```
+
+```{r}
+# うるう年
+leap_year(2012)
+# 1年後と思ったら、2012-12-31に。
+ymd(20120101) + dyears(1)
+# 今度こそ1年後
+ymd(20120101) + years(1)
+```
+
+dがついたものとついてないものがある。違いはちょっと複雑なので、記事を見たほうがいいかも。
+
+### 4-4. Comparison
+- 何日以降のデータだけ取るというように、条件分岐も容易です。
+
+```{r}
+ymd("20110604") > ymd("20110603")
+```
+
+### 4-5. ceiling_date and rounde_date and floor_date
+- 時間を丸め込む方法
+- 月・週で丸め込めるのは便利。30分単位はさすがに無さそう…。
+
+```{r}
+# 切り上げ
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "year")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "month")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "week")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "day")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "hour")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "min")
+ceiling_date(as.POSIXct("2011-06-04 10:50:40"), "sec")
+```
+
+```{r}
+# 四捨五入的な
+round_date(as.POSIXct("2011-06-04 10:50:40"), "year")
+round_date(as.POSIXct("2011-06-04 10:50:40"), "month") 
+round_date(as.POSIXct("2011-06-04 10:50:40"), "week") 
+round_date(as.POSIXct("2011-06-04 10:50:40"), "day") 
+round_date(as.POSIXct("2011-06-04 10:50:40"), "hour")
+round_date(as.POSIXct("2011-06-04 10:50:40"), "min")
+round_date(as.POSIXct("2011-06-04 10:50:40"), "sec") 
+```
+
+```{r}
+# 切り捨て
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "year")
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "month") 
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "week") 
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "day") 
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "hour")
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "min")
+floor_date(as.POSIXct("2011-06-04 10:50:40"), "sec") 
+```
+
+## 5. data.tableとPOSIXctとの関係
+
+- また時間があるときに。
