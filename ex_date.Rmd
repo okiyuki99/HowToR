@@ -9,8 +9,6 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-<div style="text-align: center;"> <b>R Tips about Date and Time</b> <br> 技術開発部(Technology Development) データプラットフォームTU(Data Platform TU) <br> E-mail：<dpf-td@ntt.com> </div>
-
 ## 0. Summary
 - Rで日付系を触るときに参考になるスクリプトを目指します。
 - というか、ほぼ「型はPOSIXctにして、lubridateパッケージで適宜処理して下さい」ということを示しています。
