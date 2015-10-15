@@ -1,0 +1,63 @@
+---
+title: "rbind / rbind_listの使い方"
+author: "gingi99"
+date: "2015/10/15"
+output: html_document
+---
+
+## 1. はじめに
+- rbind() と rbind_list() と rbind_all()の違いを理解しよう
+
+## 2. 準備
+
+### 2-1. データ
+```{r}
+data.1 <- iris[1:75,]
+data.2 <- iris[76:150,]
+```
+
+### 2-2. パッケージ
+```{r}
+library(data.table)
+library(dplyr)
+```
+
+## 3. rbind
+
+### data.frameの場合
+```{r}
+class(data.1)
+class(data.2)
+
+data <- rbind(data.1, data.2)
+class(data)
+head(data)
+```
+
+### 片方がdata.tableの場合
+- classはdata.tableになる
+
+```{r}
+data.1 <- as.data.table(data.1)
+class(data.1)
+data <- rbind(data.1, data.2)
+class(data)
+head(data)
+```
+
+### 片方が１列多い場合
+- rbindするとエラー
+
+```{r}
+data.1$SepPet <- data.1$Sepal.Length * data.1$Petal.Length
+head(data.1)
+#data <- rbind(data.1, data.2)
+```
+
+- rbind_listだとNAで補完してくれる
+
+```{r}
+data <- rbind_list(data.1,data.2)
+head(data)
+tail(data)
+```
