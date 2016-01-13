@@ -1,0 +1,72 @@
+---
+title: Fclust (Fuzzy Clustering)
+author: "ooki"
+date: "2016/1/13"
+output: html_document
+---
+
+# 0. Reference
+- [CRAN fclust pdf](https://cran.r-project.org/web/packages/fclust/fclust.pdf)
+- [inside-R doc](http://www.inside-r.org/packages/cran/fclust/docs/FKM.ent)
+
+# 1. library
+```{r}
+library(fclust)
+```
+
+# 2. data
+
+```{r}
+## McDonald's data
+data(Mc)
+names(Mc)
+Mc
+
+## data normalization by dividing the nutrition facts by the Serving Size (column 1)
+for (j in 2:(ncol(Mc)-1))
+  Mc[,j]=Mc[,j]/Mc[,1]
+
+## removing the column Serving Size
+Mc = Mc[,-1]
+```
+
+# 3. Fuzzy Clustering
+
+```{r}
+## fuzzy k-means (excluded the factor column Type (last column))
+clust <- FKM(Mc[,1:(ncol(Mc)-1)], k=6, m=1.5, stand=1)
+clust
+```
+
+X : Matrix or data.frame
+k : Number of clusters (default: 2)
+m : Parameter of fuzziness (default: 2)
+RS : Number of (random) starts (default: 1)
+stand : Standardization: if stand=1, the clustering algorithm is run using standardized data (default: no standardization)
+startU : Rational starting point for the membership degree matrix U (default: no rational start)
+conv : Convergence criterion (default: 1e-9)
+maxit : Maximum number of iterations (default: 1e+6)
+
+U : Membership degree matrix
+```{r}
+clust$U
+```
+
+H : Prototype matrix
+F : Array containing the covariance matrices of all the clusters (NULL for FKM)
+clus : Matrix containing the indices of the clusters where the objects are assigned (column 1) and the associated membership degrees (column 2)
+medoid : Vector containing the indices of the medoid objects (NULL for FKM)
+value : Vector containing the loss function values for the RS starts
+cput : Vector containing the computational times (user times) for the RS starts
+iter : Vector containing the numbers of iterations for the RS starts
+k : Number of clusters
+m : Parameter of fuzziness
+ent : Degree of fuzzy entropy (NULL for FKM)
+b : Parameter of the polynomial fuzzifier (NULL for FKM)
+vp : Volume parameter (NULL for FKM)
+delta : Noise distance (NULL for FKM)
+stand : Standardization (Yes if stand=1, No if stand=0)
+Xca : Data used in the clustering algorithm (standardized data if stand=1)
+X : Raw data
+call : Matched call
+
