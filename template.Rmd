@@ -1,0 +1,58 @@
+---
+title: "TITLE"
+author: "author name"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: false
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+---
+
+# Summary 
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=100)
+library(data.table)
+library(tidyverse)
+library(lubridate)
+
+library(ggplot2)
+library(scales)
+
+library(RcppRoll)
+set.seed(0)
+```
+
+## vars
+
+```{r}
+DIR_INPUT <- "/data/oreshika/input"
+DIR_OUTPUT <- "/data/oreshika/submit"
+DIR_OUTPUT_CLEAN <- "/data/oreshika/input_clean"
+```
+
+## Util function
+
+```{r}
+source("utils/color.R")
+source("utils/time.R")
+source("utils/save.R")
+```
+
+## Data Loading
+
+```{r}
+
+```
