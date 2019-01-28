@@ -14,4 +14,4 @@ pipeline:
       - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex/ex_kableExtra.Rmd', output_dir='docs/')"
       - echo "Commit and Push"
       - TIME_STAMP=$$(date +%Y%m%d%H%M%S)
-      - git add docs; git commit -m "auto build commit $${TIME_STAMP}"; git push
+      - git add docs; git commit -m "auto build commit $${TIME_STAMP}"; git push --set-upstream origin master
