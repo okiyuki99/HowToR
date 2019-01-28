@@ -7,6 +7,9 @@ pipeline:
       - mkdir -m 700 -p ~/.ssh
       - echo "$GITHUB_DEPLOY_KEY" > ~/.ssh/id_rsa
       - chmod 600 ~/.ssh/id_rsa
+      - echo "Git Setting"
+      - git config --global user.email "drone@HowToR"
+      - git config --global user.name "Drone"
       - echo "Build repository"
       - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex/ex_kableExtra.Rmd', output_dir='docs/')"
       - echo "Commit and Push"
