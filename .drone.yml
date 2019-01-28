@@ -3,5 +3,5 @@ pipeline:
     image: rocker/tidyverse
     commands:
       - echo "Start"
-      - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex_kableExtra.Rmd', output_dir='../docs/')"
+      - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex/ex_kableExtra.Rmd', output_dir='docs/')"
       - echo "End"
