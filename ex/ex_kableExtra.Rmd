@@ -1,0 +1,264 @@
+---
+title: "Ex kableExtra"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* kableExtraのご紹介
+* htmlベースのカスタマイズしたkableを提供してくれる
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=100)
+library(knitr)
+library(kableExtra) #install.packages("kableExtra")
+print(packageVersion("kableExtra"))
+```
+
+## Data Prep
+
+```{r}
+dt <- mtcars[1:5, 1:6]
+```
+
+# Basic  {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+kable(dt)
+```
+
+# kable_styling  {.tabset .tabset-fade .tabset-pills}
+
+## Original
+
+```{r}
+kable(dt) %>%
+  kable_styling()
+```
+
+## Bootstrap option
+
+* `striped` : ストライプ模様
+* `hover` : 選択行がわかる
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+* `condensed` : 詰める
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+* `responsive` : スモールスクリーンで横幅にスクロールがでる
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Width Adjustment
+
+* `full_width` : 横幅の指定
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+## Position
+
+* `position` : 左寄せとかfloatもできる
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "float_right")
+```
+
+float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. float_right. 
+
+## Font Size
+
+* font_size : 文字通り
+
+```{r}
+kable(dt) %>%
+  kable_styling(bootstrap_options = "striped", font_size = 7)
+```
+
+# Column and Row Specification {.tabset .tabset-fade .tabset-pills}
+
+## Column
+
+* `column_spec` : 列に対して装飾をおこなう
+    * 1列目をboldにする。2列目を黄色にする
+
+```{r}
+text_tbl <- data.frame(
+  Items = c("Item 1", "Item 2", "Item 3"),
+  Features = c(
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin vehicula tempor ex. Morbi malesuada sagittis turpis, at venenatis nisl luctus a. ",
+    "In eu urna at magna luctus rhoncus quis in nisl. Fusce in velit varius, posuere risus et, cursus augue. Duis eleifend aliquam ante, a aliquet ex tincidunt in. ", 
+    "Vivamus venenatis egestas eros ut tempus. Vivamus id est nisi. Aliquam molestie erat et sollicitudin venenatis. In ac lacus at velit scelerisque mattis. "
+  )
+)
+
+kable(text_tbl) %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T, border_right = T) %>%
+  column_spec(2, width = "30em", background = "yellow")
+```
+
+## Row
+
+* `row_spec` : 行に対して装飾をおこなう
+    * 3行目から5行目にいろいろ
+
+```{r}
+kable(dt) %>%
+  kable_styling("striped", full_width = F) %>%
+  column_spec(5:7, bold = T) %>%
+  row_spec(3:5, bold = T, color = "white", background = "#D7261E")
+```
+
+## Header Row
+
+* 0行目を指定すると、headerに装飾を適用できる
+
+```{r}
+kable(dt) %>%
+  kable_styling("striped", full_width = F) %>%
+  row_spec(0, angle = -45)
+```
+
+# Cell and Text Specification {.tabset .tabset-fade .tabset-pills}
+
+省略
+
+# Group Column and Rows {.tabset .tabset-fade .tabset-pills}
+
+## Add header rows to group columns
+
+* `add_header_above` : ヘッダーにグループ情報を書いた行を追加
+    * 1列目空白。2と3列目がGroup1。と数を記載していく
+
+```{r}
+kable(dt) %>%
+  kable_styling("striped") %>%
+  add_header_above(c(" " = 1, "Group 1" = 2, "Group 2" = 2, "Group 3" = 2))
+```
+
+階層的につけることも
+
+```{r}
+kable(dt) %>%
+  kable_styling(c("striped", "bordered")) %>%
+  add_header_above(c(" ", "Group 1" = 2, "Group 2" = 2, "Group 3" = 2)) %>%
+  add_header_above(c(" ", "Group 4" = 4, "Group 5" = 2)) %>%
+  add_header_above(c(" ", "Group 6" = 6))
+```
+
+## Group Rows
+
+* `group_rows` : 行の途中でGroup情報を追加
+    * 4行目から7行目がGroup 1
+    * 8行目から10行目がGroup 2
+
+```{r}
+kable(mtcars[1:10, 1:6], caption = "Group Rows") %>%
+  kable_styling("striped", full_width = F) %>%
+  group_rows("Group 1", 4, 7) %>%
+  group_rows("Group 2", 8, 10)
+```
+
+CSSで色付けもできる
+
+```{r}
+kable(dt) %>%
+  kable_styling("striped", full_width = F) %>%
+  group_rows("Group 1", 3, 5, label_row_css = "background-color: #666; color: #fff;")
+```
+
+## Row indentation
+
+* `add_indent` : 行頭にインデントをいれれる。使うときあるかな…
+
+```{r}
+kable(dt) %>%
+  kable_styling("striped", full_width = F) %>%
+  add_indent(c(1, 3, 5))
+```
+
+## Group rows via multi-row cell
+
+* `collapse_rows` : 行で同じ値を連結させて表示できる！
+    * 1列目と2列目を指定するだけ。簡単 
+
+```{r}
+collapse_rows_dt <- data.frame(C1 = c(rep("a", 10), rep("b", 5)),
+                 C2 = c(rep("c", 7), rep("d", 3), rep("c", 2), rep("d", 3)),
+                 C3 = 1:15,
+                 C4 = sample(c(0,1), 15, replace = TRUE))
+kable(collapse_rows_dt)
+```
+
+```{r}
+kable(collapse_rows_dt, align = "c") %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 1:2, valign = "top")
+```
+
+# Table Footnote {.tabset .tabset-fade .tabset-pills}
+
+省略
+
+# HTML Only Features {.tabset .tabset-fade .tabset-pills}
+
+## Scroll box
+
+* `scroll_box` : スクロールをいれれる。表のサイズが揃うから美しい
+
+```{r}
+kable(cbind(mtcars, mtcars)) %>%
+  kable_styling() %>%
+  scroll_box(width = "500px", height = "200px")
+```
+
+width=100%指定もできるから使い勝手もいい
+
+```{r}
+kable(cbind(mtcars, mtcars)) %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "200px")
+```
+
