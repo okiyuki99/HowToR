@@ -1,0 +1,5 @@
+pipeline:
+  hello:
+    image: alpine:3.6
+    commands:
+      - echo "Hello World"
