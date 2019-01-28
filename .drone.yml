@@ -1,6 +1,6 @@
 pipeline:
   build:
-    image: rocker/tidyverse
+    image: rocker/verse
     secrets: [ github_deploy_key ]
     commands:
       - echo "SSH Setting" 
