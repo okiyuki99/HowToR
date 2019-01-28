@@ -1,7 +1,14 @@
 pipeline:
   build:
     image: rocker/tidyverse
+    secrets: [ github_deploy_key ]
     commands:
-      - echo "Start"
+      - echo "SSH Setting" 
+      - mkdir -m 700 -p ~/.ssh
+      - echo "$GITHUB_DEPLOY_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - echo "Build repository"
       - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex/ex_kableExtra.Rmd', output_dir='docs/')"
-      - echo "End"
+      - echo "Commit and Push"
+      - TIME_STAMP=$$(date +%Y%m%d%H%M%S)
+      - git add docs; git commit -m "auto build commit $${TIME_STAMP}"; git push
