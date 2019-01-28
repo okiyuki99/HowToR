@@ -1,5 +1,7 @@
 pipeline:
-  hello:
-    image: alpine:3.6
+  build:
+    image: rocker/tidyverse
     commands:
-      - echo "Hello World"
+      - echo "Start"
+      - Rscript -e "install.packages('kableExtra'); rmarkdown::render('ex_kableExtra.Rmd', output_dir='../docs/')"
+      - echo "End"
