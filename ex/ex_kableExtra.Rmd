@@ -23,6 +23,7 @@ knit: (function(inputFile, encoding) {
 # Summary 
 
 * kableExtraのご紹介
+    * Ref : [Create Awesome HTML Table with knitr::kable and kableExtra](https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html)
 * htmlベースのカスタマイズしたkableを提供してくれる
 
 # Preparations {.tabset .tabset-fade .tabset-pills}
