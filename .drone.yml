@@ -3,6 +3,8 @@ pipeline:
     image: rocker/verse
     secrets: [ github_deploy_key ]
     commands:
+      - echo "Start Judgement"
+      - if [ ! -n "`git diff HEAD^ HEAD --name-only | grep ex/`" ]; then exit; fi
       - echo "SSH Setting" 
       - mkdir -m 700 -p ~/.ssh
       - echo "$GITHUB_DEPLOY_KEY" > ~/.ssh/id_rsa
