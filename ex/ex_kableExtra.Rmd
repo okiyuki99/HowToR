@@ -31,7 +31,7 @@ knit: (function(inputFile, encoding) {
 ## libraries
 
 ```{r, message=F, warning=F}
-options(scipen=100)
+options(scipen=10)
 library(knitr)
 library(kableExtra) #install.packages("kableExtra")
 print(packageVersion("kableExtra"))
