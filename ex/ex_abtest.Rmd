@@ -1,0 +1,56 @@
+---
+title: "Ex ABTest Sample Data"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* https://techlife.cookpad.com/entry/2015/05/08/114239
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(knitr)
+library(kableExtra) #install.packages("kableExtra")
+print(packageVersion("kableExtra"))
+```
+
+## Data Prep
+
+1週間分のデータを生成してくれる
+
+```{r}
+source("https://gist.githubusercontent.com/abicky/3a4789c3fd163a71606c/raw/5f1aeb86b8f0eb50caf386aa3fce9bc5354df9b5/create_sample_data.R")
+file_paths <- create_sample_data()
+event_logs <- data.table::fread(file_paths$event_log_file)
+access_logs <- data.table::fread(file_paths$access_log_file)
+```
+
+# Basic  {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+kable(event_logs %>% head(10))
+kable(access_logs %>% head(10))
+```
+
+
