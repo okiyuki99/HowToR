@@ -1,0 +1,17 @@
+initial.options <- commandArgs(trailingOnly = FALSE)
+file.arg.name <- "--file="
+script.name <- sub(file.arg.name, "", initial.options[grep(file.arg.name, initial.options)])
+script.basename <- dirname(script.name)
+print(script.name)
+#other.name <- file.path(script.basename, "other.R")
+#print(paste("Sourcing",other.name,"from",script.name))
+#source(other.name)
+
+#library(scriptName)
+#print(current_filename())
+#args <- commandArgs(trailingOnly=TRUE)
+#print(args)
+#setwd(args[1])
+#script.dir <- dirname(sys.frame(1)$ofile)
+#print(script.dir)
+#print(rstudioapi::getActiveDocumentContext()$path)

@@ -1,0 +1,139 @@
+---
+title: "ex_baysianABTest"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* Bayesian AB Testの練習
+    * 参考 : http://rtokei.tech/stan/bayesian-inference-with-stan-038/
+* CVRのデータ例をもとに、CVRが二項分布のもとで生成されているとみなして、ベイジアンABテストを行う
+    * 参考サイトどおりの結果にならなかったけど
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+
+library(rstan)
+library(bayesAB)
+```
+
+## Data Create
+
+```{r}
+data.frame(date = c(as.Date("2017-05-23"),as.Date("2017-05-23"),as.Date("2017-05-24"),as.Date("2017-05-24"),as.Date("2017-05-25"),
+                    as.Date("2017-05-25"),as.Date("2017-05-26"),as.Date("2017-05-26"),as.Date("2017-05-27"),as.Date("2017-05-27"),
+                    as.Date("2017-05-28"),as.Date("2017-05-28"),as.Date("2017-05-29"),as.Date("2017-05-29"),as.Date("2017-05-30"),
+                    as.Date("2017-05-30"),as.Date("2017-05-31"),as.Date("2017-05-31")),
+           pattern = rep(c("Red","Blue"),9),
+           UUPV = c(193,232,1127,1129,1145,1008,1108,1107,1241,959,1128,1216,1194,1082,1171,1065,1084,979),
+           CV = c(23,18,114,104,133,101,113,119,135,85,99,99,123,112,110,105,124,112)) -> df
+df$CVR <- df$CV / df$UUPV
+```
+
+## Data Check
+
+```{r}
+df %>% 
+  ggplot(aes(x = date, y = CVR, color = pattern)) + 
+  geom_line()
+```
+
+# Bayesian AB Test
+
+## Prep
+
+```{r}
+df.blue <- df %>% filter(pattern == "Blue")
+df.red <- df %>% filter(pattern == "Red")
+ 
+standata <-list(N_B = nrow(df.blue),
+                K_B = df.blue$UUPV,
+                Y_B = df.blue$CV,
+                N_R = nrow(df.red),
+                K_R = df.red$UUPV,
+                Y_R = df.red$CV)
+```
+
+## Stan Code
+
+```{r}
+stancode <- "
+data{
+  int N_B;
+  int K_B[N_B];
+  int Y_B[N_B]; 
+  int N_R;
+  int K_R[N_R];
+  int Y_R[N_R]; 
+}
+ 
+parameters{
+  real<lower=0, upper=1> p_B;
+  real<lower=0, upper=1> p_R;
+}
+ 
+model{
+  p_B ~ beta(1, 1); #事前分布あれば…
+  p_R ~ beta(1, 1);
+ 
+  for(n in 1:N_B){
+    Y_B[n] ~ binomial(K_B[n], p_B);
+  }
+ 
+  for(n in 1:N_R){
+    Y_R[n] ~ binomial(K_R[n], p_R);
+  }
+}
+ 
+generated quantities{
+  real delta;
+  real ImpRate;
+  real delta_over1;
+  real delta_over2;
+  real delta_over3;
+ 
+  delta = p_B - p_R;
+  ImpRate = (p_B - p_R)/p_R;
+  delta_over1 = step(delta);
+  delta_over2 = delta > 0.01 ? 1 : 0;
+  delta_over3 = delta > 0.02 ? 1 : 0;
+}
+"
+```
+
+## Stan Run
+
+```{r}
+fit <- stan(model_code = stancode, iter = 4000, chains = 4, data = standata)
+```
+
+## Result
+
+```{r}
+round(summary(fit)$summary, digits = 3)
+```
+
