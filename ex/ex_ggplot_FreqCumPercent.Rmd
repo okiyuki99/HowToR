@@ -79,8 +79,7 @@ str(df)
 
 カテゴリが1群のみ
 
-```{r, warning = F}
-# Function 
+```{r}
 plotFreqCumPer <- function(df, x, y){
   
   x <- dplyr::enquo(x)
@@ -97,8 +96,8 @@ plotFreqCumPer <- function(df, x, y){
       geom_bar(stat = "identity", fill = "#436EEE") +
       geom_line(aes(x = !!x, y = cum_per/100 * max.height), color = "#666666") +
       geom_point(aes(y = cum_per/100 * max.height, color = la != "", size = la != ""), shape = 20) +
-      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5) +
-      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5, na.rm = T) +
+      geom_label_repel(aes(y = cum_per/100 * max.height), nudge_x = 5) + 
       scale_colour_manual(name = '', values = setNames(c('#d11141','#666666'), c(T, F))) +
       scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
       scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks = seq(0, 100, by=10), name = "Cumulative percentage")) + 
@@ -136,7 +135,7 @@ plotFreqCumPerDodge <- function(df, x, y, gr){
 　　  geom_bar(aes(fill = !!gr), stat = "identity", position = "dodge") +
       geom_line(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr)) +
       geom_point(aes(y = cum_per/100 * max(!!y), color = !!gr, size = la != ""), shape = 20) +
-      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      geom_label_repel(aes(y = cum_per/100 * max.height)) + 
       scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks=seq(0, 100, by=10), name = "Cumulative percentage")) + 
       scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
       theme_bw() + 
@@ -168,7 +167,7 @@ plotFreqCumPerStack <- function(df, x, y, gr){
       geom_bar(aes(fill = !!gr), stat = "identity", position = "stack") +
       geom_line(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr)) +
       geom_point(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr, size = la != ""), shape = 20) +
-      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      geom_label_repel(aes(y = cum_per/100 * max.height)) + 
       scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
       scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks=seq(0, 100, by=10), name = "Cumulative percentage")) + 
       theme_bw() + 
@@ -182,8 +181,7 @@ plotFreqCumPerStack(df, id, num, gr)
 
 ## facet
 
-```{r, warning=F}
-# Function 
+```{r}
 plotFreqCumPerFacet <- function(df, x, y, gr){
   fml_facet <- as.formula(paste(base::substitute(gr), "~ .")) # dplyr::enquoはだめ
   x <- dplyr::enquo(x)
@@ -202,8 +200,8 @@ plotFreqCumPerFacet <- function(df, x, y, gr){
       geom_bar(aes(fill = !!gr), stat = "identity") +
       geom_line(aes(x = !!x, y = cum_per/100 * max.height), color = "#666666") +
       geom_point(aes(y = cum_per/100 * max.height, color = la != "", size = la != ""), shape = 20) +
-      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5) +
-      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5, na.rm = T) +
+      geom_label_repel(aes(y = cum_per/100 * max.height), nudge_x = 5) + 
       facet_grid(fml_facet) + # or facet_grid(rows = vars(!!gr_var)) +  
       scale_colour_manual(name = '', values = setNames(c('#d11141','#666666'), c(T, F))) +
       scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
