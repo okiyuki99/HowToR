@@ -1,0 +1,219 @@
+---
+title: "Ex ggplot2 Frequency and Cumulative Percent Plot"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* ggplotで度数分布と累積パーセンテージプロットを同時に描きたい
+    * 2群以上のカテゴリがある場合も
+    * X％の場所にラベルをつけたい
+* 参考 : https://stackoverflow.com/questions/44353778/r-ggplot-cumulative-sum-in-histogram
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(knitr)
+
+library(ggplot2)
+library(ggrepel)
+```
+
+## Data Prep
+
+指数分布で作ったデータが一番多いパターンなので、それを使う
+
+```{r}
+# sample 1 poiasson ポアソン分布
+val.a <- rpois(1000, 3) %>% table
+val.b <- rpois(1000, 3) %>% table
+num <- c(val.a, val.b)
+gr <- c(rep("A",length(val.a)),rep("B",length(val.b)))
+id <- c(c(1:length(val.a)),c(1:length(val.b)))
+df.1 <- data.frame(gr, id, num) %>% arrange(id)
+
+# sample 2 norm ランダムサンプリング
+gr <- c(rep("A",100),rep("B",100))
+id <- c(c(1:100),c(1:100))
+num <- c(sort(sample(1:1000, 100, replace=F),decreasing = T),sort(sample(1:1000, 100, replace=F), decreasing = T))
+df.2 <- data.frame(gr, id, num) %>% arrange(id)
+
+# sample 3 exp 指数分布
+gr <- c(rep("A",100),rep("B",100))
+id <- c(c(1:100),c(1:100))
+num <- c(sort(rexp(100, 3), decreasing = T),sort(rexp(100, 3), decreasing = T))
+df.3 <- data.frame(gr, id, num) %>% arrange(id)
+
+df <- df.3
+```
+
+## Data Check
+
+```{r}
+str(df)
+```
+
+
+# One Group
+
+カテゴリが1群のみ
+
+```{r, warning = F}
+# Function 
+plotFreqCumPer <- function(df, x, y){
+  
+  x <- dplyr::enquo(x)
+  y <- dplyr::enquo(y)
+
+  max.height <- df %>% pull(!!y) %>% max()
+  
+  df %>%
+    mutate(cum_per = 100 * cumsum(!!y) / sum(!!y)) %>%
+    mutate(la = ifelse(cum_per > 80 & !duplicated(cum_per > 80), paste0(round(cum_per,2),"%\r\n",!!x), '')) %>%
+    mutate(la = ifelse(cum_per > 90 & !duplicated(cum_per > 90), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    mutate(la = ifelse(cum_per > 99 & !duplicated(cum_per > 99), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    ggplot(aes(x = !!x, y = !!y, label = la)) + 
+      geom_bar(stat = "identity", fill = "#436EEE") +
+      geom_line(aes(x = !!x, y = cum_per/100 * max.height), color = "#666666") +
+      geom_point(aes(y = cum_per/100 * max.height, color = la != "", size = la != ""), shape = 20) +
+      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5) +
+      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      scale_colour_manual(name = '', values = setNames(c('#d11141','#666666'), c(T, F))) +
+      scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
+      scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks = seq(0, 100, by=10), name = "Cumulative percentage")) + 
+      theme_bw() + 
+      theme(legend.position = "top") +
+      guides(color = F, size = F) + 
+      labs(x = rlang::quo_text(x), y = "Frecuency", fill = rlang::quo_text(gr))
+}
+
+plotFreqCumPer(df %>% filter(gr == "A") %>% select(-gr), id, num)
+```
+
+
+# Two Group
+
+カテゴリが2群以上ある場合は`dodoge`と`stack`と`facet`を使い分ける
+
+## dodge
+
+```{r}
+plotFreqCumPerDodge <- function(df, x, y, gr){
+  x <- dplyr::enquo(x)
+  y <- dplyr::enquo(y)
+  gr <- dplyr::enquo(gr)
+  
+  max.height <- df %>% pull(!!y) %>% max()
+  
+  df %>%
+    group_by(!!gr) %>%
+    mutate(cum_per = 100 * cumsum(!!y) / sum(!!y)) %>%
+    mutate(la = ifelse(cum_per > 80 & !duplicated(cum_per > 80), paste0(round(cum_per,2),"%\r\n",!!x), '')) %>%
+    mutate(la = ifelse(cum_per > 90 & !duplicated(cum_per > 90), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    mutate(la = ifelse(cum_per > 99 & !duplicated(cum_per > 99), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    ggplot(aes(x = !!x, y = !!y, group = !!gr, label = la)) + 
+　　  geom_bar(aes(fill = !!gr), stat = "identity", position = "dodge") +
+      geom_line(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr)) +
+      geom_point(aes(y = cum_per/100 * max(!!y), color = !!gr, size = la != ""), shape = 20) +
+      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks=seq(0, 100, by=10), name = "Cumulative percentage")) + 
+      scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
+      theme_bw() + 
+      theme(legend.position = "top") +
+      guides(color = F, size = F) + 
+      labs(x = rlang::quo_text(x), y = "Frecuency", fill = rlang::quo_text(gr))
+}
+
+plotFreqCumPerDodge(df, id, num, gr)
+```
+
+## stack
+
+```{r}
+plotFreqCumPerStack <- function(df, x, y, gr){
+  x <- dplyr::enquo(x)
+  y <- dplyr::enquo(y)
+  gr <- dplyr::enquo(gr)
+  
+  max.height <- df %>% group_by(!!gr) %>% summarise(max_num = max(!!y)) %>% ungroup() %>% .$max_num %>% sum
+  
+  df %>%
+    group_by(!!gr) %>%
+    mutate(cum_per = 100 * cumsum(!!y) / sum(!!y)) %>%
+    mutate(la = ifelse(cum_per > 80 & !duplicated(cum_per > 80), paste0(round(cum_per,2),"%\r\n",!!x), '')) %>%
+    mutate(la = ifelse(cum_per > 90 & !duplicated(cum_per > 90), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    mutate(la = ifelse(cum_per > 99 & !duplicated(cum_per > 99), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    ggplot(aes(x = !!x, y = !!y, group = !!gr, label = la)) + 
+      geom_bar(aes(fill = !!gr), stat = "identity", position = "stack") +
+      geom_line(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr)) +
+      geom_point(aes(x = !!x, y = cum_per/100 * max.height, color = !!gr, size = la != ""), shape = 20) +
+      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
+      scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks=seq(0, 100, by=10), name = "Cumulative percentage")) + 
+      theme_bw() + 
+      theme(legend.position = "top") +
+      guides(color = F, size = F) + 
+      labs(x = rlang::quo_text(x), y = "Frecuency", fill = rlang::quo_text(gr))
+}
+
+plotFreqCumPerStack(df, id, num, gr)
+```
+
+## facet
+
+```{r, warning=F}
+# Function 
+plotFreqCumPerFacet <- function(df, x, y, gr){
+  fml_facet <- as.formula(paste(base::substitute(gr), "~ .")) # dplyr::enquoはだめ
+  x <- dplyr::enquo(x)
+  y <- dplyr::enquo(y)
+  gr <- dplyr::enquo(gr)
+  
+  max.height <- df %>% group_by(!!gr) %>% summarise(max_num = max(!!y)) %>% ungroup() %>% .$max_num %>% sum
+  
+  df %>%
+    group_by(!!gr) %>%
+    mutate(cum_per = 100 * cumsum(!!y) / sum(!!y)) %>%
+    mutate(la = ifelse(cum_per > 80 & !duplicated(cum_per > 80), paste0(round(cum_per,2),"%\r\n",!!x), '')) %>%
+    mutate(la = ifelse(cum_per > 90 & !duplicated(cum_per > 90), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    mutate(la = ifelse(cum_per > 99 & !duplicated(cum_per > 99), paste0(round(cum_per,2),"%\r\n",!!x), la)) %>%
+    ggplot(aes(x = !!x, y = !!y, group = !!gr, label = la)) + 
+      geom_bar(aes(fill = !!gr), stat = "identity") +
+      geom_line(aes(x = !!x, y = cum_per/100 * max.height), color = "#666666") +
+      geom_point(aes(y = cum_per/100 * max.height, color = la != "", size = la != ""), shape = 20) +
+      geom_vline(aes(xintercept = ifelse(la != "", !!x, NA)), colour="#5d5d5d", linetype = "dashed", size=0.5) +
+      geom_text_repel(aes(y = cum_per/100 * max.height)) + 
+      facet_grid(fml_facet) + # or facet_grid(rows = vars(!!gr_var)) +  
+      scale_colour_manual(name = '', values = setNames(c('#d11141','#666666'), c(T, F))) +
+      scale_size_manual(name = '', values = setNames(c(4, 2), c(T, F))) +
+      scale_y_continuous(sec.axis = sec_axis(~. * 100 / max.height, breaks = seq(0, 100, by=10), name = "Cumulative percentage")) + 
+      theme_bw() + 
+      theme(legend.position = "top") +
+      guides(color = F, size = F) + 
+      labs(x = rlang::quo_text(x), y = "Frecuency", fill = rlang::quo_text(gr))
+}
+plotFreqCumPerFacet(df, id, num, gr)
+```
+
+
