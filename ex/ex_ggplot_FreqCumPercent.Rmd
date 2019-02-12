@@ -38,6 +38,7 @@ library(knitr)
 
 library(ggplot2)
 library(ggrepel)
+library(ggforce)
 ```
 
 ## Data Prep
@@ -110,6 +111,11 @@ plotFreqCumPer <- function(df, x, y){
 plotFreqCumPer(df %>% filter(gr == "A") %>% select(-gr), id, num)
 ```
 
+ある区間にFocusしてみることもできる
+
+```{r}
+plotFreqCumPer(df %>% filter(gr == "A") %>% select(-gr), id, num) + coord_cartesian(xlim = c(90, 100), ylim=c(0, 0.1), expand = T)
+```
 
 # Two Group
 
@@ -214,4 +220,8 @@ plotFreqCumPerFacet <- function(df, x, y, gr){
 plotFreqCumPerFacet(df, id, num, gr)
 ```
 
+ズームもしてみる
 
+```{r}
+plotFreqCumPerFacet(df, id, num, gr) + coord_cartesian(xlim = c(90, 100), ylim=c(0, 0.1), expand = T)
+```
