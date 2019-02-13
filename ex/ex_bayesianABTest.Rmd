@@ -26,6 +26,9 @@ knit: (function(inputFile, encoding) {
     * 参考 : http://rtokei.tech/stan/bayesian-inference-with-stan-038/
 * CVRのデータ例をもとに、CVRが二項分布のもとで生成されているとみなして、ベイジアンABテストを行う
     * 参考サイトどおりの結果にならなかったけど
+* bayesAB パッケージを使う
+    * ベルヌーイ分布の例をそのまま写景実行
+    * 他の例もいくつかありそう : https://charleshsliao.wordpress.com/2017/03/13/ab-testing-with-bayesab/
 
 # Preparations {.tabset .tabset-fade .tabset-pills}
 
@@ -33,6 +36,8 @@ knit: (function(inputFile, encoding) {
 
 ```{r, message=F, warning=F}
 options(scipen=10)
+set.seed(1234)
+
 library(knitr)
 library(dplyr)
 library(ggplot2)
@@ -40,6 +45,8 @@ library(ggplot2)
 library(rstan)
 library(bayesAB)
 ```
+
+# Bayesian AB Test by Stan {.tabset .tabset-fade .tabset-pills}
 
 ## Data Create
 
@@ -62,9 +69,7 @@ df %>%
   geom_line()
 ```
 
-# Bayesian AB Test
-
-## Prep
+## Stan Prep
 
 ```{r}
 df.blue <- df %>% filter(pattern == "Blue")
@@ -135,5 +140,76 @@ fit <- stan(model_code = stancode, iter = 4000, chains = 4, data = standata)
 
 ```{r}
 round(summary(fit)$summary, digits = 3)
+```
+
+# Bayesian AB Test by bayesAB - Bernouli Distribution
+
+bayesAB パッケージを用いたベイジアンABテスト
+
+## Data Prep
+
+ベルヌーイ分布にしたがって、0 or 1が出るシミュレーションデータを作成
+
+* Aは250人のうち、25%の確率でクリックしたデータとみなす
+* Bは250人のうち、20%の確率でクリックしたデータとみなす
+
+```{r}
+A_binom <- rbinom(250, 1, .25)
+B_binom <- rbinom(250, 1, .2)
+```
+
+## Data Check
+
+```{r}
+str(A_binom)
+table(A_binom)
+table(B_binom)
+```
+
+## Prior distribution
+
+ベルヌーイ分布の事前分布として、ベータ分布を用いる
+
+ベルヌーイ分布のパラメータpが0.2-0.3付近にあると経験から知っていると想定
+
+```{r}
+# pが50 / 150 = 0.3333
+bayesAB::plotBeta(50, 100) 
+bayesAB::plotBeta(100, 200) 
+
+# pが65/(65+200) = 0.245
+bayesAB::plotBeta(65, 200)
+```
+
+## Inference
+
+* print は入力したパラメータの情報を出力してるのみ
+    * AカラムのMeanは入力したA_binomの平均値のこと
+
+* summaryは計算結果
+    * 1行目 : ベルヌーイ分布のパラメータpの事後分布のQuantile値。pがどれくらい揺れそうか分かる。
+    * 2行目 : AがBより大きい確率。基本はこれを見て判断
+    * 3行目 : (A-B)/Bの確信区間。Plotの3つ目の5%から95%と対応 
+    * 4行目 : 事後期待値損失。解釈の仕方は…？
+    
+```{r}
+AB <- bayesTest(A_binom, B_binom,
+                priors = c("alpha" = 65, "beta" = 200),
+                n_samples = 10000, # default 1e5
+                distribution = "bernoulli")
+
+print(AB)
+
+summary(AB)
+```
+
+## Plot
+
+* 1つ目 : 事前分布（つまりベータ分布）
+* 2つ目 : パラメータpの事後分布
+* 3つ目 : 10000個のサンプルのヒストグラム。summaryの2つ目の結果と対応している
+
+```{r}
+plot(AB)
 ```
 
