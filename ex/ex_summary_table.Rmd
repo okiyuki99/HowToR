@@ -1,0 +1,96 @@
+---
+title: "ex_summary_table"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* よく使う集計のサマリーテーブルの作り方
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+set.seed(1234)
+
+library(knitr)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(kableExtra)
+```
+
+## Data Create
+
+```{r}
+gr <- c(rep("A",30),rep("B",30))
+id <- c(c(1:30),c(1:30))
+num <- c(sort(round(rexp(30, 3)*10000), decreasing = T),sort(round(rexp(30, 3)*10000), decreasing = T))
+df <- data.frame(gr, id, num) %>% arrange(id)
+```
+
+## Data Check
+
+```{r}
+str(df)
+```
+
+# Summary Table
+
+```{r}
+create_summary_df <- function(df, var_row, var_col, value){
+  
+  var_row <- dplyr::enquo(var_row)
+  var_col <- dplyr::enquo(var_col)
+  value <- dplyr::enquo(value)
+  
+  df %>%
+    group_by(!!var_row) %>%
+    mutate(sum_cnt = sum(!!value, na.rm = T)) %>%
+    mutate(cumsum_cnt = cumsum(!!value)) %>%
+    mutate(per = !!value / sum(!!value, na.rm = T) * 100) %>%
+    mutate(cum_per = round(cumsum(per), 2)) %>% 
+    mutate(num_of_rest = ifelse(cum_per > 80 & !duplicated(cum_per > 80), sum_cnt - cumsum_cnt, NA_real_)) %>%
+    mutate(num_of_rest = ifelse(cum_per > 95 & !duplicated(cum_per > 95), sum_cnt - cumsum_cnt, num_of_rest)) %>%
+    mutate(num_of_rest = ifelse(cum_per > 99 & !duplicated(cum_per > 99), sum_cnt - cumsum_cnt, num_of_rest)) %>%
+    mutate(cum_per = paste0(format(cum_per, nsmall = 2), '%')) %>%
+    #insertComma() %>%
+    mutate(cum_per = ifelse(!is.na(num_of_rest), paste0(cum_per,"\r\n(",cumsum_cnt,")\r\n(",num_of_rest,")"), paste0(cum_per,"\r\n(",cumsum_cnt,")"))) %>%
+    ungroup() %>%
+    mutate(!!var_row := fct_inorder(factor(paste0(!!var_row, "\r\n(",sum_cnt,")")))) %>%
+    select(!!var_col, !!var_row, cum_per) %>%
+    spread(!!var_col, cum_per, fill = '--')
+}
+
+save_to <- function(x, v, fun) {
+  var <- substitute(v)
+  eval(bquote(.(var) <- .(fun(x))), envir = globalenv())
+  x
+}
+
+create_summary_df(df, gr, id, num) %>%
+  save_to(num_cols, ncol) %>%
+  kable(align = "r") %>%
+  kable_styling(c("striped", "bordered")) %>%
+  add_header_above(c("　" = 1, "Number" = num_cols - 1))
+```
+
