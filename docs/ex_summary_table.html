@@ -11,7 +11,7 @@
 
 <meta name="author" content="gingi99" />
 
-<meta name="date" content="2019-02-14" />
+<meta name="date" content="2019-02-15" />
 
 <title>ex_summary_table</title>
 
@@ -367,7 +367,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">ex_summary_table</h1>
 <h4 class="author"><em>gingi99</em></h4>
-<h4 class="date"><em>2019-02-14</em></h4>
+<h4 class="date"><em>2019-02-15</em></h4>
 
 </div>
 
@@ -394,7 +394,7 @@ div.tocify {
 <div id="data-create" class="section level2">
 <h2><span class="header-section-number">2.2</span> Data Create</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">gr &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="st">&quot;A&quot;</span>,<span class="dv">30</span>),<span class="kw">rep</span>(<span class="st">&quot;B&quot;</span>,<span class="dv">30</span>))
-id &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">30</span>),<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">30</span>))
+id &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">formatC</span>(<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">30</span>),<span class="dt">width=</span><span class="dv">2</span>,<span class="dt">flag =</span> <span class="st">'0'</span>),<span class="kw">formatC</span>(<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">30</span>),<span class="dt">width=</span><span class="dv">2</span>,<span class="dt">flag =</span> <span class="st">'0'</span>))
 num &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">sort</span>(<span class="kw">round</span>(<span class="kw">rexp</span>(<span class="dv">30</span>, <span class="dv">3</span>)<span class="op">*</span><span class="dv">10000</span>), <span class="dt">decreasing =</span> T),<span class="kw">sort</span>(<span class="kw">round</span>(<span class="kw">rexp</span>(<span class="dv">30</span>, <span class="dv">3</span>)<span class="op">*</span><span class="dv">10000</span>), <span class="dt">decreasing =</span> T))
 df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(gr, id, num) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">arrange</span>(id)</code></pre></div>
 </div>
@@ -403,7 +403,7 @@ df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(gr, id, num)
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(df)</code></pre></div>
 <pre><code>## 'data.frame':    60 obs. of  3 variables:
 ##  $ gr : Factor w/ 2 levels &quot;A&quot;,&quot;B&quot;: 1 2 1 2 1 2 1 2 1 2 ...
-##  $ id : int  1 1 2 2 3 3 4 4 5 5 ...
+##  $ id : Factor w/ 30 levels &quot;01&quot;,&quot;02&quot;,&quot;03&quot;,..: 1 1 2 2 3 3 4 4 5 5 ...
 ##  $ num: num  10175 14415 8339 12268 6654 ...</code></pre>
 </div>
 </div>
@@ -425,8 +425,8 @@ df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(gr, id, num)
 <span class="st">    </span><span class="kw">mutate</span>(<span class="dt">num_of_rest =</span> <span class="kw">ifelse</span>(cum_per <span class="op">&gt;</span><span class="st"> </span><span class="dv">95</span> <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">duplicated</span>(cum_per <span class="op">&gt;</span><span class="st"> </span><span class="dv">95</span>), sum_cnt <span class="op">-</span><span class="st"> </span>cumsum_cnt, num_of_rest)) <span class="op">%&gt;%</span>
 <span class="st">    </span><span class="kw">mutate</span>(<span class="dt">num_of_rest =</span> <span class="kw">ifelse</span>(cum_per <span class="op">&gt;</span><span class="st"> </span><span class="dv">99</span> <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">duplicated</span>(cum_per <span class="op">&gt;</span><span class="st"> </span><span class="dv">99</span>), sum_cnt <span class="op">-</span><span class="st"> </span>cumsum_cnt, num_of_rest)) <span class="op">%&gt;%</span>
 <span class="st">    </span><span class="kw">mutate</span>(<span class="dt">cum_per =</span> <span class="kw">paste0</span>(<span class="kw">format</span>(cum_per, <span class="dt">nsmall =</span> <span class="dv">2</span>), <span class="st">'%'</span>)) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="co">#insertComma() %&gt;%</span>
-<span class="st">    </span><span class="kw">mutate</span>(<span class="dt">cum_per =</span> <span class="kw">ifelse</span>(<span class="op">!</span><span class="kw">is.na</span>(num_of_rest), <span class="kw">paste0</span>(cum_per,<span class="st">&quot;</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,cumsum_cnt,<span class="st">&quot;)</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,num_of_rest,<span class="st">&quot;)&quot;</span>), <span class="kw">paste0</span>(cum_per,<span class="st">&quot;</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,cumsum_cnt,<span class="st">&quot;)&quot;</span>))) <span class="op">%&gt;%</span>
+<span class="st">    </span><span class="kw">insertComma</span>() <span class="op">%&gt;%</span>
+<span class="st">    </span><span class="kw">mutate</span>(<span class="dt">cum_per =</span> <span class="kw">ifelse</span>(num_of_rest <span class="op">!=</span><span class="st"> 'NA'</span>, <span class="kw">paste0</span>(cum_per,<span class="st">&quot;</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,cumsum_cnt,<span class="st">&quot;)</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,num_of_rest,<span class="st">&quot;)&quot;</span>), <span class="kw">paste0</span>(cum_per,<span class="st">&quot;</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,cumsum_cnt,<span class="st">&quot;)&quot;</span>))) <span class="op">%&gt;%</span>
 <span class="st">    </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
 <span class="st">    </span><span class="kw">mutate</span>(<span class="op">!!</span>var_row <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">fct_inorder</span>(<span class="kw">factor</span>(<span class="kw">paste0</span>(<span class="op">!!</span>var_row, <span class="st">&quot;</span><span class="ch">\r\n</span><span class="st">(&quot;</span>,sum_cnt,<span class="st">&quot;)&quot;</span>)))) <span class="op">%&gt;%</span>
 <span class="st">    </span><span class="kw">select</span>(<span class="op">!!</span>var_col, <span class="op">!!</span>var_row, cum_per) <span class="op">%&gt;%</span>
@@ -437,6 +437,10 @@ save_to &lt;-<span class="st"> </span><span class="cf">function</span>(x, v, fun
   var &lt;-<span class="st"> </span><span class="kw">substitute</span>(v)
   <span class="kw">eval</span>(<span class="kw">bquote</span>(.(var) &lt;-<span class="st"> </span>.(<span class="kw">fun</span>(x))), <span class="dt">envir =</span> <span class="kw">globalenv</span>())
   x
+}
+
+insertComma &lt;-<span class="st"> </span><span class="cf">function</span>(df){
+  <span class="kw">mutate_if</span>(df, is.numeric, <span class="cf">function</span>(x){<span class="kw">formatC</span>(x,<span class="dt">format =</span> <span class="st">&quot;f&quot;</span>, <span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>, <span class="dt">drop0trailing =</span> T)})
 }
 
 <span class="kw">create_summary_df</span>(df, gr, id, num) <span class="op">%&gt;%</span>
@@ -463,31 +467,31 @@ Number
 gr
 </th>
 <th style="text-align:right;">
-1
+01
 </th>
 <th style="text-align:right;">
-2
+02
 </th>
 <th style="text-align:right;">
-3
+03
 </th>
 <th style="text-align:right;">
-4
+04
 </th>
 <th style="text-align:right;">
-5
+05
 </th>
 <th style="text-align:right;">
-6
+06
 </th>
 <th style="text-align:right;">
-7
+07
 </th>
 <th style="text-align:right;">
-8
+08
 </th>
 <th style="text-align:right;">
-9
+09
 </th>
 <th style="text-align:right;">
 10
@@ -557,199 +561,199 @@ gr
 <tbody>
 <tr>
 <td style="text-align:right;">
-A (93849)
+A (93,849)
 </td>
 <td style="text-align:right;">
-10.84% (10175)
+10.84% (10,175)
 </td>
 <td style="text-align:right;">
-19.73% (18514)
+19.73% (18,514)
 </td>
 <td style="text-align:right;">
-26.82% (25168)
+26.82% (25,168)
 </td>
 <td style="text-align:right;">
-33.50% (31435)
+33.50% (31,435)
 </td>
 <td style="text-align:right;">
-40.01% (37552)
+40.01% (37,552)
 </td>
 <td style="text-align:right;">
-46.23% (43388)
+46.23% (43,388)
 </td>
 <td style="text-align:right;">
-52.42% (49197)
+52.42% (49,197)
 </td>
 <td style="text-align:right;">
-58.31% (54726)
+58.31% (54,726)
 </td>
 <td style="text-align:right;">
-63.98% (60046)
+63.98% (60,046)
 </td>
 <td style="text-align:right;">
-67.58% (63420)
+67.58% (63,420)
 </td>
 <td style="text-align:right;">
-70.92% (66555)
+70.92% (66,555)
 </td>
 <td style="text-align:right;">
-74.23% (69661)
+74.23% (69,661)
 </td>
 <td style="text-align:right;">
-77.34% (72584)
+77.34% (72,584)
 </td>
 <td style="text-align:right;">
-80.32% (75377) (18472)
+80.32% (75,377) (18,472)
 </td>
 <td style="text-align:right;">
-83.24% (78124)
+83.24% (78,124)
 </td>
 <td style="text-align:right;">
-85.95% (80659)
+85.95% (80,659)
 </td>
 <td style="text-align:right;">
-88.59% (83140)
+88.59% (83,140)
 </td>
 <td style="text-align:right;">
-91.18% (85568)
+91.18% (85,568)
 </td>
 <td style="text-align:right;">
-93.02% (87299)
+93.02% (87,299)
 </td>
 <td style="text-align:right;">
-94.40% (88590)
+94.40% (88,590)
 </td>
 <td style="text-align:right;">
-95.76% (89868) (3981)
+95.76% (89,868) (3,981)
 </td>
 <td style="text-align:right;">
-97.02% (91049)
+97.02% (91,049)
 </td>
 <td style="text-align:right;">
-97.89% (91872)
+97.89% (91,872)
 </td>
 <td style="text-align:right;">
-98.76% (92684)
+98.76% (92,684)
 </td>
 <td style="text-align:right;">
-99.48% (93359) (490)
+99.48% (93,359) (490)
 </td>
 <td style="text-align:right;">
-99.80% (93659)
+99.80% (93,659)
 </td>
 <td style="text-align:right;">
-99.91% (93765)
+99.91% (93,765)
 </td>
 <td style="text-align:right;">
-99.96% (93814)
+99.96% (93,814)
 </td>
 <td style="text-align:right;">
-99.99% (93836)
+99.99% (93,836)
 </td>
 <td style="text-align:right;">
-100.00% (93849)
+100.00% (93,849)
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-B (118386)
+B (118,386)
 </td>
 <td style="text-align:right;">
-12.18% (14415)
+12.18% (14,415)
 </td>
 <td style="text-align:right;">
-22.54% (26683)
+22.54% (26,683)
 </td>
 <td style="text-align:right;">
-32.18% (38101)
+32.18% (38,101)
 </td>
 <td style="text-align:right;">
-39.97% (47314)
+39.97% (47,314)
 </td>
 <td style="text-align:right;">
-47.06% (55710)
+47.06% (55,710)
 </td>
 <td style="text-align:right;">
-53.25% (63044)
+53.25% (63,044)
 </td>
 <td style="text-align:right;">
-59.14% (70009)
+59.14% (70,009)
 </td>
 <td style="text-align:right;">
-64.64% (76528)
+64.64% (76,528)
 </td>
 <td style="text-align:right;">
-69.34% (82083)
+69.34% (82,083)
 </td>
 <td style="text-align:right;">
-73.87% (87451)
+73.87% (87,451)
 </td>
 <td style="text-align:right;">
-77.98% (92314)
+77.98% (92,314)
 </td>
 <td style="text-align:right;">
-82.03% (97111) (21275)
+82.03% (97,111) (21,275)
 </td>
 <td style="text-align:right;">
-85.49% (101212)
+85.49% (101,212)
 </td>
 <td style="text-align:right;">
-88.24% (104464)
+88.24% (104,464)
 </td>
 <td style="text-align:right;">
-90.85% (107549)
+90.85% (107,549)
 </td>
 <td style="text-align:right;">
-93.36% (110529)
+93.36% (110,529)
 </td>
 <td style="text-align:right;">
-95.66% (113243) (5143)
+95.66% (113,243) (5,143)
 </td>
 <td style="text-align:right;">
-96.88% (114691)
+96.88% (114,691)
 </td>
 <td style="text-align:right;">
-97.83% (115814)
+97.83% (115,814)
 </td>
 <td style="text-align:right;">
-98.43% (116532)
+98.43% (116,532)
 </td>
 <td style="text-align:right;">
-98.80% (116962)
+98.80% (116,962)
 </td>
 <td style="text-align:right;">
-99.12% (117346) (1040)
+99.12% (117,346) (1,040)
 </td>
 <td style="text-align:right;">
-99.40% (117676)
+99.40% (117,676)
 </td>
 <td style="text-align:right;">
-99.65% (117971)
+99.65% (117,971)
 </td>
 <td style="text-align:right;">
-99.76% (118099)
+99.76% (118,099)
 </td>
 <td style="text-align:right;">
-99.84% (118196)
+99.84% (118,196)
 </td>
 <td style="text-align:right;">
-99.90% (118273)
+99.90% (118,273)
 </td>
 <td style="text-align:right;">
-99.95% (118330)
+99.95% (118,330)
 </td>
 <td style="text-align:right;">
-99.98% (118360)
+99.98% (118,360)
 </td>
 <td style="text-align:right;">
-100.00% (118386)
+100.00% (118,386)
 </td>
 </tr>
 </tbody>
 </table>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiZXhfc3VtbWFyeV90YWJsZSIKYXV0aG9yOiAiZ2luZ2k5OSIKZGF0ZTogJ2ByIFN5cy5EYXRlKClgJwpvdXRwdXQ6CiAgaHRtbF9kb2N1bWVudDoKICAgIG51bWJlcl9zZWN0aW9uczogdHJ1ZQogICAgdG9jOiB0cnVlCiAgICB0b2NfZmxvYXQ6IHRydWUKICAgIGZpZ193aWR0aDogNwogICAgZmlnX2hlaWdodDogNC41CiAgICBmaWdfY2FwdGlvbjogdHJ1ZQogICAgdGhlbWU6IGNvc21vCiAgICBoaWdobGlnaHQ6IHRhbmdvCiAgICBjb2RlX2ZvbGRpbmc6IGhpZGUKICAgIGNvZGVfZG93bmxvYWQ6IHRydWUKa25pdDogKGZ1bmN0aW9uKGlucHV0RmlsZSwgZW5jb2RpbmcpIHsgCiAgICAgIHJtYXJrZG93bjo6cmVuZGVyKGlucHV0RmlsZSwKICAgICAgICAgICAgICAgICAgICAgICAgZW5jb2Rpbmc9ZW5jb2RpbmcsIAogICAgICAgICAgICAgICAgICAgICAgICBvdXRwdXRfZGlyID0gIi4uL2RvY3MvIikgfSkKLS0tCgojIFN1bW1hcnkgCgoqIOOCiOOBj+S9v+OBhumbhuioiOOBruOCteODnuODquODvOODhuODvOODluODq+OBruS9nOOCiuaWuQoKIyBQcmVwYXJhdGlvbnMgey50YWJzZXQgLnRhYnNldC1mYWRlIC50YWJzZXQtcGlsbHN9CgojIyBsaWJyYXJpZXMKCmBgYHtyLCBtZXNzYWdlPUYsIHdhcm5pbmc9Rn0Kb3B0aW9ucyhzY2lwZW49MTApCnNldC5zZWVkKDEyMzQpCgpsaWJyYXJ5KGtuaXRyKQpsaWJyYXJ5KGRwbHlyKQpsaWJyYXJ5KHRpZHlyKQpsaWJyYXJ5KGZvcmNhdHMpCmxpYnJhcnkoa2FibGVFeHRyYSkKYGBgCgojIyBEYXRhIENyZWF0ZQoKYGBge3J9CmdyIDwtIGMocmVwKCJBIiwzMCkscmVwKCJCIiwzMCkpCmlkIDwtIGMoYygxOjMwKSxjKDE6MzApKQpudW0gPC0gYyhzb3J0KHJvdW5kKHJleHAoMzAsIDMpKjEwMDAwKSwgZGVjcmVhc2luZyA9IFQpLHNvcnQocm91bmQocmV4cCgzMCwgMykqMTAwMDApLCBkZWNyZWFzaW5nID0gVCkpCmRmIDwtIGRhdGEuZnJhbWUoZ3IsIGlkLCBudW0pICU+JSBhcnJhbmdlKGlkKQpgYGAKCiMjIERhdGEgQ2hlY2sKCmBgYHtyfQpzdHIoZGYpCmBgYAoKIyBTdW1tYXJ5IFRhYmxlCgpgYGB7cn0KY3JlYXRlX3N1bW1hcnlfZGYgPC0gZnVuY3Rpb24oZGYsIHZhcl9yb3csIHZhcl9jb2wsIHZhbHVlKXsKICAKICB2YXJfcm93IDwtIGRwbHlyOjplbnF1byh2YXJfcm93KQogIHZhcl9jb2wgPC0gZHBseXI6OmVucXVvKHZhcl9jb2wpCiAgdmFsdWUgPC0gZHBseXI6OmVucXVvKHZhbHVlKQogIAogIGRmICU+JQogICAgZ3JvdXBfYnkoISF2YXJfcm93KSAlPiUKICAgIG11dGF0ZShzdW1fY250ID0gc3VtKCEhdmFsdWUsIG5hLnJtID0gVCkpICU+JQogICAgbXV0YXRlKGN1bXN1bV9jbnQgPSBjdW1zdW0oISF2YWx1ZSkpICU+JQogICAgbXV0YXRlKHBlciA9ICEhdmFsdWUgLyBzdW0oISF2YWx1ZSwgbmEucm0gPSBUKSAqIDEwMCkgJT4lCiAgICBtdXRhdGUoY3VtX3BlciA9IHJvdW5kKGN1bXN1bShwZXIpLCAyKSkgJT4lIAogICAgbXV0YXRlKG51bV9vZl9yZXN0ID0gaWZlbHNlKGN1bV9wZXIgPiA4MCAmICFkdXBsaWNhdGVkKGN1bV9wZXIgPiA4MCksIHN1bV9jbnQgLSBjdW1zdW1fY250LCBOQV9yZWFsXykpICU+JQogICAgbXV0YXRlKG51bV9vZl9yZXN0ID0gaWZlbHNlKGN1bV9wZXIgPiA5NSAmICFkdXBsaWNhdGVkKGN1bV9wZXIgPiA5NSksIHN1bV9jbnQgLSBjdW1zdW1fY250LCBudW1fb2ZfcmVzdCkpICU+JQogICAgbXV0YXRlKG51bV9vZl9yZXN0ID0gaWZlbHNlKGN1bV9wZXIgPiA5OSAmICFkdXBsaWNhdGVkKGN1bV9wZXIgPiA5OSksIHN1bV9jbnQgLSBjdW1zdW1fY250LCBudW1fb2ZfcmVzdCkpICU+JQogICAgbXV0YXRlKGN1bV9wZXIgPSBwYXN0ZTAoZm9ybWF0KGN1bV9wZXIsIG5zbWFsbCA9IDIpLCAnJScpKSAlPiUKICAgICNpbnNlcnRDb21tYSgpICU+JQogICAgbXV0YXRlKGN1bV9wZXIgPSBpZmVsc2UoIWlzLm5hKG51bV9vZl9yZXN0KSwgcGFzdGUwKGN1bV9wZXIsIlxyXG4oIixjdW1zdW1fY250LCIpXHJcbigiLG51bV9vZl9yZXN0LCIpIiksIHBhc3RlMChjdW1fcGVyLCJcclxuKCIsY3Vtc3VtX2NudCwiKSIpKSkgJT4lCiAgICB1bmdyb3VwKCkgJT4lCiAgICBtdXRhdGUoISF2YXJfcm93IDo9IGZjdF9pbm9yZGVyKGZhY3RvcihwYXN0ZTAoISF2YXJfcm93LCAiXHJcbigiLHN1bV9jbnQsIikiKSkpKSAlPiUKICAgIHNlbGVjdCghIXZhcl9jb2wsICEhdmFyX3JvdywgY3VtX3BlcikgJT4lCiAgICBzcHJlYWQoISF2YXJfY29sLCBjdW1fcGVyLCBmaWxsID0gJy0tJykKfQoKc2F2ZV90byA8LSBmdW5jdGlvbih4LCB2LCBmdW4pIHsKICB2YXIgPC0gc3Vic3RpdHV0ZSh2KQogIGV2YWwoYnF1b3RlKC4odmFyKSA8LSAuKGZ1bih4KSkpLCBlbnZpciA9IGdsb2JhbGVudigpKQogIHgKfQoKY3JlYXRlX3N1bW1hcnlfZGYoZGYsIGdyLCBpZCwgbnVtKSAlPiUKICBzYXZlX3RvKG51bV9jb2xzLCBuY29sKSAlPiUKICBrYWJsZShhbGlnbiA9ICJyIikgJT4lCiAga2FibGVfc3R5bGluZyhjKCJzdHJpcGVkIiwgImJvcmRlcmVkIikpICU+JQogIGFkZF9oZWFkZXJfYWJvdmUoYygi44CAIiA9IDEsICJOdW1iZXIiID0gbnVtX2NvbHMgLSAxKSkKYGBgCgo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiZXhfc3VtbWFyeV90YWJsZSIKYXV0aG9yOiAiZ2luZ2k5OSIKZGF0ZTogJ2ByIFN5cy5EYXRlKClgJwpvdXRwdXQ6CiAgaHRtbF9kb2N1bWVudDoKICAgIG51bWJlcl9zZWN0aW9uczogdHJ1ZQogICAgdG9jOiB0cnVlCiAgICB0b2NfZmxvYXQ6IHRydWUKICAgIGZpZ193aWR0aDogNwogICAgZmlnX2hlaWdodDogNC41CiAgICBmaWdfY2FwdGlvbjogdHJ1ZQogICAgdGhlbWU6IGNvc21vCiAgICBoaWdobGlnaHQ6IHRhbmdvCiAgICBjb2RlX2ZvbGRpbmc6IGhpZGUKICAgIGNvZGVfZG93bmxvYWQ6IHRydWUKa25pdDogKGZ1bmN0aW9uKGlucHV0RmlsZSwgZW5jb2RpbmcpIHsgCiAgICAgIHJtYXJrZG93bjo6cmVuZGVyKGlucHV0RmlsZSwKICAgICAgICAgICAgICAgICAgICAgICAgZW5jb2Rpbmc9ZW5jb2RpbmcsIAogICAgICAgICAgICAgICAgICAgICAgICBvdXRwdXRfZGlyID0gIi4uL2RvY3MvIikgfSkKLS0tCgojIFN1bW1hcnkgCgoqIOOCiOOBj+S9v+OBhumbhuioiOOBruOCteODnuODquODvOODhuODvOODluODq+OBruS9nOOCiuaWuQoKIyBQcmVwYXJhdGlvbnMgey50YWJzZXQgLnRhYnNldC1mYWRlIC50YWJzZXQtcGlsbHN9CgojIyBsaWJyYXJpZXMKCmBgYHtyLCBtZXNzYWdlPUYsIHdhcm5pbmc9Rn0Kb3B0aW9ucyhzY2lwZW49MTApCnNldC5zZWVkKDEyMzQpCgpsaWJyYXJ5KGtuaXRyKQpsaWJyYXJ5KGRwbHlyKQpsaWJyYXJ5KHRpZHlyKQpsaWJyYXJ5KGZvcmNhdHMpCmxpYnJhcnkoa2FibGVFeHRyYSkKYGBgCgojIyBEYXRhIENyZWF0ZQoKYGBge3J9CmdyIDwtIGMocmVwKCJBIiwzMCkscmVwKCJCIiwzMCkpCmlkIDwtIGMoZm9ybWF0QyhjKDE6MzApLHdpZHRoPTIsZmxhZyA9ICcwJyksZm9ybWF0QyhjKDE6MzApLHdpZHRoPTIsZmxhZyA9ICcwJykpCm51bSA8LSBjKHNvcnQocm91bmQocmV4cCgzMCwgMykqMTAwMDApLCBkZWNyZWFzaW5nID0gVCksc29ydChyb3VuZChyZXhwKDMwLCAzKSoxMDAwMCksIGRlY3JlYXNpbmcgPSBUKSkKZGYgPC0gZGF0YS5mcmFtZShnciwgaWQsIG51bSkgJT4lIGFycmFuZ2UoaWQpCmBgYAoKIyMgRGF0YSBDaGVjawoKYGBge3J9CnN0cihkZikKYGBgCgojIFN1bW1hcnkgVGFibGUKCmBgYHtyfQpjcmVhdGVfc3VtbWFyeV9kZiA8LSBmdW5jdGlvbihkZiwgdmFyX3JvdywgdmFyX2NvbCwgdmFsdWUpewogIAogIHZhcl9yb3cgPC0gZHBseXI6OmVucXVvKHZhcl9yb3cpCiAgdmFyX2NvbCA8LSBkcGx5cjo6ZW5xdW8odmFyX2NvbCkKICB2YWx1ZSA8LSBkcGx5cjo6ZW5xdW8odmFsdWUpCiAgCiAgZGYgJT4lCiAgICBncm91cF9ieSghIXZhcl9yb3cpICU+JQogICAgbXV0YXRlKHN1bV9jbnQgPSBzdW0oISF2YWx1ZSwgbmEucm0gPSBUKSkgJT4lCiAgICBtdXRhdGUoY3Vtc3VtX2NudCA9IGN1bXN1bSghIXZhbHVlKSkgJT4lCiAgICBtdXRhdGUocGVyID0gISF2YWx1ZSAvIHN1bSghIXZhbHVlLCBuYS5ybSA9IFQpICogMTAwKSAlPiUKICAgIG11dGF0ZShjdW1fcGVyID0gcm91bmQoY3Vtc3VtKHBlciksIDIpKSAlPiUgCiAgICBtdXRhdGUobnVtX29mX3Jlc3QgPSBpZmVsc2UoY3VtX3BlciA+IDgwICYgIWR1cGxpY2F0ZWQoY3VtX3BlciA+IDgwKSwgc3VtX2NudCAtIGN1bXN1bV9jbnQsIE5BX3JlYWxfKSkgJT4lCiAgICBtdXRhdGUobnVtX29mX3Jlc3QgPSBpZmVsc2UoY3VtX3BlciA+IDk1ICYgIWR1cGxpY2F0ZWQoY3VtX3BlciA+IDk1KSwgc3VtX2NudCAtIGN1bXN1bV9jbnQsIG51bV9vZl9yZXN0KSkgJT4lCiAgICBtdXRhdGUobnVtX29mX3Jlc3QgPSBpZmVsc2UoY3VtX3BlciA+IDk5ICYgIWR1cGxpY2F0ZWQoY3VtX3BlciA+IDk5KSwgc3VtX2NudCAtIGN1bXN1bV9jbnQsIG51bV9vZl9yZXN0KSkgJT4lCiAgICBtdXRhdGUoY3VtX3BlciA9IHBhc3RlMChmb3JtYXQoY3VtX3BlciwgbnNtYWxsID0gMiksICclJykpICU+JQogICAgaW5zZXJ0Q29tbWEoKSAlPiUKICAgIG11dGF0ZShjdW1fcGVyID0gaWZlbHNlKG51bV9vZl9yZXN0ICE9ICdOQScsIHBhc3RlMChjdW1fcGVyLCJcclxuKCIsY3Vtc3VtX2NudCwiKVxyXG4oIixudW1fb2ZfcmVzdCwiKSIpLCBwYXN0ZTAoY3VtX3BlciwiXHJcbigiLGN1bXN1bV9jbnQsIikiKSkpICU+JQogICAgdW5ncm91cCgpICU+JQogICAgbXV0YXRlKCEhdmFyX3JvdyA6PSBmY3RfaW5vcmRlcihmYWN0b3IocGFzdGUwKCEhdmFyX3JvdywgIlxyXG4oIixzdW1fY250LCIpIikpKSkgJT4lCiAgICBzZWxlY3QoISF2YXJfY29sLCAhIXZhcl9yb3csIGN1bV9wZXIpICU+JQogICAgc3ByZWFkKCEhdmFyX2NvbCwgY3VtX3BlciwgZmlsbCA9ICctLScpCn0KCnNhdmVfdG8gPC0gZnVuY3Rpb24oeCwgdiwgZnVuKSB7CiAgdmFyIDwtIHN1YnN0aXR1dGUodikKICBldmFsKGJxdW90ZSguKHZhcikgPC0gLihmdW4oeCkpKSwgZW52aXIgPSBnbG9iYWxlbnYoKSkKICB4Cn0KCmluc2VydENvbW1hIDwtIGZ1bmN0aW9uKGRmKXsKICBtdXRhdGVfaWYoZGYsIGlzLm51bWVyaWMsIGZ1bmN0aW9uKHgpe2Zvcm1hdEMoeCxmb3JtYXQgPSAiZiIsIGJpZy5tYXJrID0gIiwiLCBkcm9wMHRyYWlsaW5nID0gVCl9KQp9CgpjcmVhdGVfc3VtbWFyeV9kZihkZiwgZ3IsIGlkLCBudW0pICU+JQogIHNhdmVfdG8obnVtX2NvbHMsIG5jb2wpICU+JQogIGthYmxlKGFsaWduID0gInIiKSAlPiUKICBrYWJsZV9zdHlsaW5nKGMoInN0cmlwZWQiLCAiYm9yZGVyZWQiKSkgJT4lCiAgYWRkX2hlYWRlcl9hYm92ZShjKCLjgIAiID0gMSwgIk51bWJlciIgPSBudW1fY29scyAtIDEpKQpgYGAKCg==</div>
 
 
 </div>

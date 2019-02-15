@@ -43,7 +43,7 @@ library(kableExtra)
 
 ```{r}
 gr <- c(rep("A",30),rep("B",30))
-id <- c(c(1:30),c(1:30))
+id <- c(formatC(c(1:30),width=2,flag = '0'),formatC(c(1:30),width=2,flag = '0'))
 num <- c(sort(round(rexp(30, 3)*10000), decreasing = T),sort(round(rexp(30, 3)*10000), decreasing = T))
 df <- data.frame(gr, id, num) %>% arrange(id)
 ```
@@ -73,8 +73,8 @@ create_summary_df <- function(df, var_row, var_col, value){
     mutate(num_of_rest = ifelse(cum_per > 95 & !duplicated(cum_per > 95), sum_cnt - cumsum_cnt, num_of_rest)) %>%
     mutate(num_of_rest = ifelse(cum_per > 99 & !duplicated(cum_per > 99), sum_cnt - cumsum_cnt, num_of_rest)) %>%
     mutate(cum_per = paste0(format(cum_per, nsmall = 2), '%')) %>%
-    #insertComma() %>%
-    mutate(cum_per = ifelse(!is.na(num_of_rest), paste0(cum_per,"\r\n(",cumsum_cnt,")\r\n(",num_of_rest,")"), paste0(cum_per,"\r\n(",cumsum_cnt,")"))) %>%
+    insertComma() %>%
+    mutate(cum_per = ifelse(num_of_rest != 'NA', paste0(cum_per,"\r\n(",cumsum_cnt,")\r\n(",num_of_rest,")"), paste0(cum_per,"\r\n(",cumsum_cnt,")"))) %>%
     ungroup() %>%
     mutate(!!var_row := fct_inorder(factor(paste0(!!var_row, "\r\n(",sum_cnt,")")))) %>%
     select(!!var_col, !!var_row, cum_per) %>%
@@ -85,6 +85,10 @@ save_to <- function(x, v, fun) {
   var <- substitute(v)
   eval(bquote(.(var) <- .(fun(x))), envir = globalenv())
   x
+}
+
+insertComma <- function(df){
+  mutate_if(df, is.numeric, function(x){formatC(x,format = "f", big.mark = ",", drop0trailing = T)})
 }
 
 create_summary_df(df, gr, id, num) %>%
