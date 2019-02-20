@@ -1,0 +1,66 @@
+---
+title: "Data Model and Experiment"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: paper # good
+    orientation: columns
+    vertical_layout: scroll # 縦スクロールをいれてくれるので必要
+    source_code: embed
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+```{r setup, include=FALSE}
+library(DT)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(flexdashboard)
+library(datamodelr)
+```
+
+Data Model
+-------------------------------------
+    
+### Data Model
+
+```{r include = F, child = "data01.Rmd"}
+```
+
+```{r, fig.width=20, fig.height=10}
+# for(r in rel){
+#   dm <- dm_add_reference_(dm, table = r[1], column = r[2], ref = r[3], ref_col = r[4])
+# }
+graph <- dm_create_graph(dm, rankdir = "BT", col_attr = c("column", "type"), edge_attrs = "dir = both, arrowtail = crow, arrowhead = odiamond", columnArrows = F)
+dm_render_graph(graph)
+```
+
+### Plot1
+
+```{r, fig.width=5, fig.height=5}
+ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
+```
+
+### Plot2
+
+```{r, fig.width=8, fig.height=8}
+ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
+```
+
+### Plot3
+
+```{r, fig.width=20, fig.height=20}
+ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
+```
+
+### DT
+
+```{r}
+DT::datatable(bind_cols(iris,iris,iris,iris), rownames = F, 
+              extensions = c('Buttons','KeyTable'), 
+              options = list(dom = 'Bfrtip', buttons = I('colvis'), keys = TRUE,
+                             initComplete = JS("function(settings, json) {","$(this.api().table().header()).css({'background-color': '#666', 'color': '#fff'});","}"))
+)
+```
