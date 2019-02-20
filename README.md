@@ -11,3 +11,4 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Example of ggplot FreqCumPercent](http://gingi99.github.io/HowToR/ex_ggplot_FreqCumPercent.html)
 * [Example of bayesAB package](http://gingi99.github.io/HowToR/ex_bayesianABTest.html)
 * [Example of summary table](http://gingi99.github.io/HowToR/ex_summary_table.html)
+* [Example of datamodelr](http://gingi99.github.io/HowToR/ex_datamodelr.html)
