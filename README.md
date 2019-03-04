@@ -5,7 +5,7 @@ R Tips
 - Try and Error for me
 
 ## docs
-We can see html reports built by ```knitr + Rmd``` in the following url : http://gingi99.github.io/HowToR/ .
+We can see html reports built by ```knitr + Rmd``` in the following url : http://okiyuki99.github.io/HowToR/ .
 
 ### Rmarkdown
 * [Example of kableExtra](http://okiyuki99.github.io/HowToR/ex_kableExtra.html)
