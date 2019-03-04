@@ -1,0 +1,96 @@
+---
+title: "Ex Logger"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* logger packageのご紹介
+    * Ref : https://github.com/daroczig/logger
+
+# libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(logger) # remotes::install_github('daroczig/logger')
+
+print(packageVersion("logger"))
+```
+
+# Quick Example
+
+```{r}
+log_threshold(DEBUG)
+log_info('Script starting up...')
+
+pkgs <- available.packages()
+log_info('There are {nrow(pkgs)} R packages hosted on CRAN!')
+
+for (letter in letters) {
+    lpkgs <- sum(grepl(letter, pkgs[, 'Package'], ignore.case = TRUE))
+    log_level(if (lpkgs < 5000) TRACE else DEBUG,
+              '{lpkgs} R packages including the {shQuote(letter)} letter')
+}
+
+log_warn('There might be many, like {1:2} or more warnings!!!')
+```
+
+# Color
+
+Rmdじゃ色が出ない
+
+```{r}
+log_layout(layout_glue_colors)
+log_threshold(TRACE)
+log_info('Starting the script...')
+log_debug('This is the second log line')
+log_trace('Note that the 2nd line is being placed right after the 1st one.')
+log_success('Doing pretty well so far!')
+log_warn('But beware, as some errors might come :/')
+log_error('This is a problem')
+log_debug('Note that getting an error is usually bad')
+log_error('This is another problem')
+log_fatal('The last problem')
+```
+
+# Demo
+
+`Rscript -e "demo(colors, package = 'logger', echo = FALSE)"`とやると出る
+
+# Try Rscript 
+
+````
+`r ''````{r}
+Rscript ex/ex_logger.R
+INFO [2019-04-03 21:15:16] Starting the script...
+DEBUG [2019-04-03 21:15:16] This is the second log line
+TRACE [2019-04-03 21:15:16] Note that the 2nd line is being placed right after the 1st one.
+SUCCESS [2019-04-03 21:15:16] Doing pretty well so far!
+WARN [2019-04-03 21:15:16] But beware, as some errors might come :/
+ERROR [2019-04-03 21:15:16] This is a problem
+DEBUG [2019-04-03 21:15:16] Note that getting an error is usually bad
+ERROR [2019-04-03 21:15:16] This is another problem
+FATAL [2019-04-03 21:15:16] The last problem
+`r ''````
+````
+
+
+
