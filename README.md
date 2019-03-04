@@ -15,5 +15,8 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Example of datamodelr](http://okiyuki99.github.io/HowToR/ex_datamodelr.html)
 * [Example of logger](http://okiyuki99.github.io/HowToR/ex_logger.html)
 
+### ML
+* [Example of fastknn](http://okiyuki99.github.io/HowToR/ex_fastknn.html)
+
 ### Flexdashboard
 * [Example of datamodel and experiment](http://okiyuki99.github.io/HowToR/ex_flexdashboard_datamodel.html)
