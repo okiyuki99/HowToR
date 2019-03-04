@@ -1,0 +1,83 @@
+---
+title: "Ex fastknn"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* fastknnのご紹介
+    * Ref : https://github.com/davpinto/fastknn
+* KNN特徴量抽出をしたい
+
+# libraries
+
+```{r, message=F, warning=F}
+set.seed(1234)
+options(scipen=10)
+library(caTools)
+library(ggplot2)
+library(gridExtra)
+library(fastknn)
+print(packageVersion("fastknn"))
+```
+
+# Data Prep
+
+```{r}
+data("chess")
+x <- data.matrix(chess$x)
+y <- chess$y
+```
+
+```{r}
+dim(x)
+head(x)
+str(y)
+```
+
+# Split data
+
+```{r}
+tr.idx <- which(caTools::sample.split(Y = y, SplitRatio = 0.7))
+x.tr <- x[tr.idx,]
+x.te <- x[-tr.idx,]
+y.tr <- y[tr.idx]
+y.te <- y[-tr.idx]
+
+dim(x.tr)
+dim(x.te)
+```
+
+
+# Feature extraction with KNN
+
+k * number of class の特徴を作る（例はk=3, number of class = 2)
+
+それぞれのクラスで最も近い距離、2番目に近い距離、3番目に近い距離を返している
+
+x.teでの計算は、x.trとの距離で出してるのかな
+
+```{r}
+new.data <- knnExtract(x.tr, y.tr, x.te, k = 3)
+str(new.data)
+head(new.data$new.tr, 5)
+```
+
+
