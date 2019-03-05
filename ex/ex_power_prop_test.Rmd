@@ -1,0 +1,179 @@
+---
+title: "Ex power.prop.test"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* power.prop.testを理解する
+
+# libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(broom)
+```
+
+# Data 1 
+
+```{r}
+alpha <- 0.05
+sample_size <- 555
+p1 <- 0.1
+p2 <- 0.15
+```
+
+# Power Prop Test
+
+power = `0.712`らしい
+
+```{r}
+power.prop.test(n = sample_size, p1 = p1, p2 = p2, sig.level = alpha, power = NULL, alternative = "two.sided") %>% broom::tidy()
+```
+
+# PMF
+
+reject_lineでちゃんと有意差でるか確認できた
+
+```{r}
+pmf_as_is <- dbinom(0:sample_size, sample_size, p1)
+pmf_to_be <- dbinom(0:sample_size, sample_size, p2)
+
+reject_line <- min(which(cumsum(pmf_as_is) > (1.0 - alpha/2)))
+binom.test(c(reject_line, -1+sample_size - reject_line), p=p1)
+
+# 可視化してみる
+ind <- pmf_as_is >= 0.0001 | pmf_to_be >= 0.0001 
+bind_rows(data.frame(n = c(0:sample_size)[ind], pmf = pmf_as_is[ind], group = "as_is", stringsAsFactors = F),
+          data.frame(n = c(0:sample_size)[ind], pmf = pmf_to_be[ind], group = "to_be", stringsAsFactors = F)) %>% 
+  ggplot(aes(x = n, y = pmf, group = group, color = group)) + 
+    geom_line() 
+```
+
+# Power Simulation
+
+`0.712`前後になってるのでシミュレーションはだいたいOK
+
+可視化した結果もPMFと大体あってる
+
+```{r}
+cnt <- 0
+gr1 <- c()
+gr2 <- c()
+for(n in 1:10000){
+  group1 <- rbinom(n = sample_size, size = 1, prob = 0.1)
+  group2 <- rbinom(n = sample_size, size = 1, prob = 0.15)
+  gr1 <- c(gr1, sum(group1 == 1))
+  gr2 <- c(gr2, sum(group2 == 1))
+  p <- prop.test(c(sum(group1 == 1), sum(group2 == 1)), c(sample_size, sample_size), correct=F)$p.value
+  if(p < 0.05){
+    cnt <- cnt + 1
+  }
+}
+print(cnt/10000) 
+
+bind_rows(tibble(name = "A", value = gr1),tibble(name = "B", value = gr2)) %>%
+  group_by(name, value) %>%
+  count() %>%
+  ggplot(aes(x = value, y = n, color = name, group = name)) + geom_line() 
+```
+
+# Power Visualization
+
+これのとおり：http://ethen8181.github.io/Business-Analytics/ab_tests/frequentist_ab_test.html
+
+powerもほぼ一致した！
+
+```{r}
+count_a  <- sample_size * p1
+count_b  <- sample_size * p2
+p_pooled <- (count_a  + count_b) / (sample_size + sample_size)
+Z <- (p2 - p1) / sqrt( p_pooled * (1 - p_pooled) * (1 / sample_size + 1 / sample_size))
+
+# Z corresponds to the mean of the normal distribution
+mean1 <- 0
+mean2 <- Z
+print(glue::glue("Z:",Z))
+
+x <- seq(-4, 6, 0.1) # use for generating the x axis of the normal distribution
+data <- data.frame( x = x, y1 = dnorm(x, mean1, 1), y2 = dnorm(x, mean2, 1))
+
+ggplot(data, aes(x = x) ) +
+  geom_line( aes( y = y1, colour = 'H0 is true' ), size = 1.2 ) +
+  geom_line( aes( y = y2, colour = 'H1 is true' ), size = 1.2 ) +
+  geom_area(aes( y = y1, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'black' ) +
+  geom_area(aes( y = y2, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'blue', alpha = 0.3 ) +
+  labs( x = '', y = '', title = sprintf('p1 = %s, p2 = %s, size = %d', p1, p2, sample_size)) + 
+  theme( legend.title = element_blank() ) +
+  scale_colour_manual( breaks = c("H0 is true", "H1 is true"), 
+                       values = c("blue", "red") )
+
+print(glue::glue("power:",sum(data[data$x > qnorm(alpha/2,lower.tail = F),]$y2) / sum(data$y2)))
+```
+
+# Data 2
+
+```{r}
+alpha <- 0.05
+sample_size <- 963
+p1 <- 0.3
+p2 <- 0.36
+```
+
+# Power Prop Test
+
+power = `0.800`らしい
+
+```{r}
+power.prop.test(n = sample_size, p1 = p1, p2 = p2, sig.level = alpha, power = NULL, alternative = "two.sided") %>% broom::tidy()
+```
+# Power Visualization
+
+powerもほぼ一致した！
+
+```{r}
+count_a  <- sample_size * p1
+count_b  <- sample_size * p2
+p_pooled <- (count_a  + count_b) / (sample_size + sample_size)
+Z <- (p2 - p1) / sqrt( p_pooled * (1 - p_pooled) * (1 / sample_size + 1 / sample_size))
+
+# Z corresponds to the mean of the normal distribution
+mean1 <- 0
+mean2 <- Z
+print(glue::glue("Z:",Z))
+
+x <- seq(-4, 6, 0.1) # use for generating the x axis of the normal distribution
+data <- data.frame( x = x, y1 = dnorm(x, mean1, 1), y2 = dnorm(x, mean2, 1))
+
+ggplot(data, aes(x = x) ) +
+  geom_line( aes( y = y1, colour = 'H0 is true' ), size = 1.2 ) +
+  geom_line( aes( y = y2, colour = 'H1 is true' ), size = 1.2 ) +
+  geom_area(aes( y = y1, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'black' ) +
+  geom_area(aes( y = y2, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'blue', alpha = 0.3 ) +
+  labs( x = '', y = '', title = sprintf('p1 = %s, p2 = %s, size = %d', p1, p2, sample_size)) + 
+  theme( legend.title = element_blank() ) +
+  scale_colour_manual( breaks = c("H0 is true", "H1 is true"), 
+                       values = c("blue", "red") )
+
+print(glue::glue("power:",sum(data[data$x > qnorm(alpha/2,lower.tail = F),]$y2) / sum(data$y2)))
+```
