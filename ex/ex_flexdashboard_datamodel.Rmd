@@ -3,7 +3,7 @@ title: "Data Model and Experiment"
 output: 
   flexdashboard::flex_dashboard:
     theme: paper # good
-    orientation: columns
+    orientation: rows
     vertical_layout: scroll # 縦スクロールをいれてくれるので必要
     source_code: embed
 knit: (function(inputFile, encoding) { 
@@ -21,7 +21,7 @@ library(flexdashboard)
 library(datamodelr)
 ```
 
-Data Model
+Row1
 -------------------------------------
     
 ### Data Model
@@ -29,7 +29,7 @@ Data Model
 ```{r include = F, child = "data01.Rmd"}
 ```
 
-```{r, fig.width=20, fig.height=10}
+```{r, fig.width=50, fig.height=20}
 # for(r in rel){
 #   dm <- dm_add_reference_(dm, table = r[1], column = r[2], ref = r[3], ref_col = r[4])
 # }
@@ -37,11 +37,17 @@ graph <- dm_create_graph(dm, rankdir = "BT", col_attr = c("column", "type"), edg
 dm_render_graph(graph)
 ```
 
+Row2
+-------------------------------------
+
 ### Plot1
 
 ```{r, fig.width=5, fig.height=5}
 ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
 ```
+
+Row3
+-------------------------------------
 
 ### Plot2
 
@@ -49,11 +55,17 @@ ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
 ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
 ```
 
+Row4
+-------------------------------------
+
 ### Plot3
 
 ```{r, fig.width=20, fig.height=20}
 ggplot(iris, aes(x =  Sepal.Length, y =  Sepal.Width)) + geom_point()
 ```
+
+Row5
+-------------------------------------
 
 ### DT
 
@@ -64,3 +76,19 @@ DT::datatable(bind_cols(iris,iris,iris,iris), rownames = F,
                              initComplete = JS("function(settings, json) {","$(this.api().table().header()).css({'background-color': '#666', 'color': '#fff'});","}"))
 )
 ```
+
+Row6 {.tabset .tabset-fade}
+-------------------------------------
+   
+### Chart 2
+
+```{r}
+kable(bind_cols(iris,iris,iris,iris)) 
+```   
+ 
+### Chart 3
+    
+```{r}
+kable(bind_cols(iris,iris,iris,iris))
+```
+
