@@ -1,0 +1,97 @@
+---
+title: "Ex prophet"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* Prophetで遊ぶ
+* 参考 
+    * Github - facebook/prophet : https://github.com/facebook/prophet
+    * Prophet入門【R編】Facebookの時系列予測ツール : https://www.slideshare.net/hoxo_m/prophetrfacebook
+
+# Preparations
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(ggplot2)
+library(prophet)
+print(packageVersion("prophet"))
+```
+
+## Data Prep
+
+prophetで配布しているサンプルデータをロード
+
+```{r}
+df <- read.csv("https://raw.githubusercontent.com/facebook/prophet/master/examples/example_wp_log_R_outliers1.csv")
+df$ds <- as.Date(df$ds)
+print(str(df))
+```
+
+# Basic
+
+`prophet`にデータフレームをいれるだけ。返ってくるモデルのパラメータはいろいろあるな
+
+```
+prophet(df = NULL, growth = "linear", changepoints = NULL,
+  n.changepoints = 25, changepoint.range = 0.8,
+  yearly.seasonality = "auto", weekly.seasonality = "auto",
+  daily.seasonality = "auto", holidays = NULL,
+  seasonality.mode = "additive", seasonality.prior.scale = 10,
+  holidays.prior.scale = 10, changepoint.prior.scale = 0.05,
+  mcmc.samples = 0, interval.width = 0.8, uncertainty.samples = 1000,
+  fit = TRUE, ...)
+```
+
+```{r}
+model <- prophet(df)
+print(str(model))
+```
+
+# Forecast
+
+`make_future_dataframe` で180日後まで予測する
+
+`yhat_lower`と`yhat_upper`が信頼区間（デフォルトパラメータだと**80%**なので注意）
+
+```{r}
+future <- prophet::make_future_dataframe(model, 180) # 空のデータフレームが生成される
+fore <- predict(model, future)
+str(fore)
+```
+
+# Visualization
+
+```{r}
+plot(model, fore) + theme_bw()
+```
+
+
+# Change Point
+
+変化点がどこにあるかを表示
+
+```{r}
+print(model$changepoints)
+```
