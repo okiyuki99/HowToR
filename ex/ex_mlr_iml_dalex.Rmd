@@ -1,0 +1,215 @@
+---
+title: "Ex mlr iml dalex"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* mlrを使って学習したモデルをimlとDALEXで解釈する。
+* 今のところ下のGithubの写景した程度のメモ
+    * Github : https://github.com/katokohaku/compareModels_with_MLR-IML/blob/master/000_setup_mlr.Rmd 
+    * How to use in R model-agnostic data explanation with DALEX & iml : https://www.slideshare.net/kato_kohaku/how-to-use-in-r-modelagnostic-data-explanation-with-dalex-iml
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## library
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(mlr)
+library(iml)
+library(DALEX)
+library(knitr)
+set.seed(1234)
+
+print(packageVersion("mlr"))
+print(packageVersion("iml"))
+print(packageVersion("DALEX"))
+```
+
+## Data
+
+```{r}
+data(apartments, package = "DALEX")
+data(apartmentsTest, package = "DALEX")
+
+str(apartments)
+```
+
+# Task Setting
+
+## Task
+
+回帰のタスクを設定。taskをprintするといろいろでる
+
+```{r}
+task <- mlr::makeRegrTask(id = "ap", data = apartments, target = "m2.price")
+print(task)
+```
+
+## Tune
+
+なんやろ
+
+```{r}
+tune.ctrl <- makeTuneControlRandom()
+print(tune.ctrl)
+```
+
+## Resample
+
+```{r}
+res.desc <- makeResampleDesc("CV", iters = 2)
+print(res.desc)
+```
+
+# Modeling {.tabset .tabset-fade .tabset-pills}
+
+## Model List
+
+適用できるモデルを一覧で見ることができる
+
+```{r listLearners}
+listLearners(task) %>%
+  select(class, short.name, package)
+```
+
+## setup 
+
+```{r}
+learner <- NULL
+par.set <- NULL
+```
+
+## linear regression with penalty (elastincnet)
+
+```{r setup.enet}
+# getLearnerParamSet(makeLearner("regr.glmnet"))
+learner[["enet"]]<- makeLearner("regr.glmnet")
+par.set[["enet"]] <- makeParamSet(
+  makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("s",     lower = 1, upper = 10^3))
+```
+
+## random forest (RF)
+
+```{r setup.rf}
+# getLearnerParamSet(makeLearner("regr.randomForest"))
+learner[["rf"]] <- makeLearner("regr.randomForest")
+par.set[["rf"]] <- makeParamSet(
+  makeIntegerParam("ntree", lower=50, upper=1000))
+```
+
+## Gradient Boosting Machine (GBM)
+
+```{r setup.xgb}
+# getLearnerParamSet(makeLearner("regr.gbm"))
+learner[["gbm"]] <- makeLearner("regr.gbm")
+par.set[["gbm"]] <- makeParamSet(
+  makeIntegerParam("n.trees",           lower = 3L, upper = 50L),
+  makeIntegerParam("interaction.depth", lower = 3L, upper = 20L))
+```
+
+```{r}
+learner %>% print()
+par.set %>% print()
+```
+
+## Paramter Tuning 
+
+```{r tune.parset, message=FALSE}
+model.labels <- names(learner)
+tuned.par.set <- NULL
+for(model.name in model.labels) {
+  # print(model.name)
+  tuned.par.set[[model.name]] <- tuneParams(
+    learner[[model.name]], 
+    task = task, 
+    resampling = res.desc,
+    par.set = par.set[[model.name]],
+    control = tune.ctrl)
+}
+tuned.par.set %>% print()
+```
+
+## Create a new model using tuned hyperparameters
+
+```{r setHyperPars, message=FALSE}
+tuned.learner <- list()
+for(model.name in model.labels) {
+  
+  # print(model.name)
+  tuned.learner[[model.name]] <- setHyperPars(
+    learner = learner[[model.name]],
+    par.vals = tuned.par.set[[model.name]]$x
+  )
+}
+tuned.learner %>% print()
+```
+
+## Re-train parameters using tuned hyperparameters (and full training set)
+  
+```{r tune.model, message=FALSE}
+model.labels <- names(learner)
+tuned.model   <- NULL
+for(model.name in model.labels) {
+  tuned.model[[model.name]] <- train(tuned.learner[[model.name]], task)
+}
+tuned.model %>% print()
+```
+
+# iml {.tabset .tabset-fade .tabset-pills}
+
+## Predictor
+
+RFモデルを例にやってみる
+
+モデルとテストデータをInputして`Predictor`オブジェクトを作る
+
+```{r}
+X <- apartmentsTest %>% select(-m2.price)
+Y <- apartmentsTest$m2.price
+predictor.rf <- iml::Predictor$new(tuned.model[["rf"]], data = X, y = Y)
+```
+
+## Feature Importance
+
+Permutation Errorも返してくれる
+
+```{r}
+imp <- iml::FeatureImp$new(predictor.rf, loss = "mae")
+plot(imp)
+print(imp)
+```
+
+## Partial dependence Plot - PDP
+
+ある特徴量以外を固定したときの平均的な変化的なやつ
+
+```{r}
+pdp.obj <- iml::Partial$new(predictor.rf, feature = "construction.year")
+plot(pdp.obj)
+```
+
+```{r}
+pdp.obj$set.feature("surface")
+pdp.obj$center(min(apartmentsTest$surface))
+plot(pdp.obj)
+```
