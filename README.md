@@ -18,7 +18,8 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 ### Stats
 * [Example of power prop test](http://okiyuki99.github.io/HowToR/ex_power_prop_test.html)
 
-### ML
+### Model
+* [Example of Prophet](http://okiyuki99.github.io/HowToR/ex_prophet.html)
 * [Example of fastknn](http://okiyuki99.github.io/HowToR/ex_fastknn.html)
 
 ### Flexdashboard
