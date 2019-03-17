@@ -64,8 +64,13 @@ prophet(df = NULL, growth = "linear", changepoints = NULL,
   fit = TRUE, ...)
 ```
 
+* `growth` : `linear` or `logistic`
+    * logisticを使う場合、もとのデータフレームに`cap`カラム（上限）が必要
+* `holidays` : イベント効果。データフレームでいれる
+
+
 ```{r}
-model <- prophet(df)
+model <- prophet(df, growth = "linear")
 print(str(model))
 ```
 
@@ -85,6 +90,14 @@ str(fore)
 
 ```{r}
 plot(model, fore) + theme_bw()
+```
+
+# Trend and Seasonality
+
+`prophet_plot_components` で見れる
+
+```{r}
+prophet_plot_components(model, fore)
 ```
 
 
