@@ -1,0 +1,80 @@
+---
+title: "Ex mixtools"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* 混合モデルのパラメータを推定できるmixtoolsを使ってみる
+* 参考
+    * 単変量混合正規分布モデルをデータにフィットさせる : http://kusanagi.hatenablog.jp/entry/2017/01/24/193909
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(ggplot2)
+library(mixtools) #install.packages("mixtools")
+print(packageVersion("mixtools"))
+```
+
+## Data Prep
+
+```{r}
+data <- c(rnorm(100, 50, 10), rnorm(200,150,20), rnorm(150, 80, 5))
+```
+
+## Plot
+
+```{r}
+ggplot(data = NULL, aes(x = data)) + geom_histogram(bins = 200)
+```
+
+
+# normalmixEM  {.tabset .tabset-fade .tabset-pills}
+
+`normalmixEM`でEMアルゴリズムに基づいて混合正規分布のパラメータを推定する
+
+## Estimate
+
+```{r}
+fit <- mixtools::normalmixEM(data, k = 3)
+summary(fit)
+```
+
+## Plot
+
+```{r}
+fit_value <- function(x){
+  y <- fit$lambda[1]*dnorm(x,fit$mu[1],fit$sigma[1]) + 
+    fit$lambda[2]*dnorm(x,fit$mu[2],fit$sigma[2]) +
+    fit$lambda[3]*dnorm(x,fit$mu[3],fit$sigma[3])
+  y
+}
+
+
+data.frame(x = 1:200, est = fit_value(1:200)) %>%
+  ggplot(aes(x = 1:200, y = est, group = 1)) + 
+    geom_line() + 
+    theme_bw()
+```
