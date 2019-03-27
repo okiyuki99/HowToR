@@ -25,6 +25,7 @@ knit: (function(inputFile, encoding) {
 * 次元圧縮UMAPを試してみる
 * 参考
     * https://cran.r-project.org/web/packages/umap/vignettes/umap.html
+    * https://github.com/jlmelville/uwot
 
 # Preparations {.tabset .tabset-fade .tabset-pills}
 
@@ -34,8 +35,11 @@ knit: (function(inputFile, encoding) {
 options(scipen=10)
 library(data.table)
 library(dplyr)
+library(ggplot2)
 library(umap) #install.packages("umap")
+library(uwot) #devtools::install_github("jlmelville/uwot")
 print(packageVersion("umap"))
+print(packageVersion("uwot"))
 ```
 
 ## Data Prep
@@ -64,14 +68,14 @@ train$label <- NULL
 rm(test.index, train.index)
 ```
 
-# Get Started
+# Get Started : `umap`
 
 ## Paramters 
 
 `umap.defaults`でパラメータを確認できる
 
 ```{r}
-umap.defaults
+umap::umap.defaults
 ```
 
 ## Try Default Parameter
@@ -89,7 +93,7 @@ data_umap$layout %>%
   as.data.frame() %>%
   mutate(label = factor(train_label)) %>%
   ggplot(aes(x = V1, y = V2, color = label)) + 
-    geom_point(size = 1, alpha = 0.1) + 
+    geom_point(size = 0.01, alpha = 1) + 
     theme_bw() + 
     theme(legend.position = "bottom") + 
     labs(x = "", y = "", title = "default parameter")
@@ -119,7 +123,7 @@ umap2 <- test_umap %>%
 umap1 %>%
   bind_rows(umap2) %>%
   ggplot(aes(x = V1, y = V2, color = label, shape = is_train)) + 
-    geom_point(size = 3, alpha = 0.1) + 
+    geom_point(size = 0.01, alpha = 1) + 
     scale_shape_manual(values = c(1,4)) +
     theme_bw() + 
     theme(legend.position = "bottom") + 
@@ -127,15 +131,83 @@ umap1 %>%
 
 ```
 
-# Python Implementetion
+## Skip : Python Implementetion
 
-事前にpython版のインストールしておく必要があるが利用できるみたい
+`method = "umap-learn"`で事前にpython版のインストールしておく必要があるが利用できるみたい
 
-```{r}
+```{r, eval = F}
 start_time <- proc.time()
 data_umap <- umap::umap(train, random_state = 1234, method = "umap-learn")
 print(proc.time() - start_time)
 ```
 
+# Get Started : `uwot`
+
+## Try
+
+```{r}
+set.seed(1234)
+start_time <- proc.time()
+train_umap <- uwot::umap(train, verbose = T, ret_model = T, n_threads = 4)
+print(proc.time() - start_time)
+```
+
+## Visualization
+
+```{r}
+train_umap$embedding %>% 
+  as.data.frame() %>%
+  mutate(label = factor(train_label)) %>%
+  ggplot(aes(x = V1, y = V2, color = label)) + 
+    geom_point(size = 0.01, alpha = 1) + 
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "uwot")
+```
+
+## Projecting test data
+
+```{r}
+start_time <- proc.time()
+test_umap <- uwot::umap_transform(test, train_umap, verbose = T, n_threads = 4)
+print(proc.time() - start_time)
+```
 
 
+```{r}
+umap1 <- train_umap$embedding %>% 
+  as.data.frame() %>%
+  mutate(label = factor(train_label), is_train = "1")
+umap2 <- test_umap %>% 
+  as.data.frame() %>%
+  mutate(label = factor(test_label), is_train = "0")
+umap1 %>%
+  bind_rows(umap2) %>%
+  ggplot(aes(x = V1, y = V2, color = label, shape = is_train)) + 
+    geom_point(size = 0.01, alpha = 1) + 
+    scale_shape_manual(values = c(1,4)) +
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "uwot + test")
+```
+
+## with PCA
+
+`pca`を事前にすることでさらにスピードアップ
+
+```{r}
+start_time <- proc.time()
+train_umap <- uwot::umap(train, verbose = T, ret_model = T, pca = 50, n_threads = 4)
+print(proc.time() - start_time)
+```
+
+```{r}
+train_umap$embedding %>% 
+  as.data.frame() %>%
+  mutate(label = factor(train_label)) %>%
+  ggplot(aes(x = V1, y = V2, color = label)) + 
+    geom_point(size = 0.01, alpha = 1) + 
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "uwot")
+```
