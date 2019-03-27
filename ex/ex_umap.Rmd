@@ -1,0 +1,141 @@
+---
+title: "Ex UMAP"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* 次元圧縮UMAPを試してみる
+* 参考
+    * https://cran.r-project.org/web/packages/umap/vignettes/umap.html
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(data.table)
+library(dplyr)
+library(umap) #install.packages("umap")
+print(packageVersion("umap"))
+```
+
+## Data Prep
+
+mnist dataをkaggleのサイトからDLして使う
+
+```{r}
+train <- fread("/mnt/data/digit-recognizer/train.csv", data.table = F)
+print(dim(train))
+print(train[1:5,1:5])
+```
+
+## Preprocess
+
+```{r}
+test.index <- sample(1:nrow(train), nrow(train)/2) %>% sort
+train.index <- setdiff(1:nrow(train), test.index)
+test <- train %>% slice(test.index)
+train <- train %>% slice(train.index)
+
+test_label <- test$label
+test$label <- NULL
+
+train_label <- train$label
+train$label <- NULL
+rm(test.index, train.index)
+```
+
+# Get Started
+
+## Paramters 
+
+`umap.defaults`でパラメータを確認できる
+
+```{r}
+umap.defaults
+```
+
+## Try Default Parameter
+
+```{r}
+start_time <- proc.time()
+data_umap <- umap::umap(train, random_state = 1234)
+print(proc.time() - start_time)
+```
+
+## Visualization
+
+```{r}
+data_umap$layout %>% 
+  as.data.frame() %>%
+  mutate(label = factor(train_label)) %>%
+  ggplot(aes(x = V1, y = V2, color = label)) + 
+    geom_point(size = 1, alpha = 0.1) + 
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "default parameter")
+```
+
+## Projecting test data
+
+UMAPのいいところが新しいデータを同じ空間に配置できるところである
+
+`predict`関数で行う
+
+```{r}
+start_time <- proc.time()
+test_umap <- predict(data_umap, test)
+print(proc.time() - start_time)
+```
+
+形状変えてPlotしたけどわかりにくいな…
+
+```{r}
+umap1 <- data_umap$layout %>% 
+  as.data.frame() %>%
+  mutate(label = factor(train_label), is_train = "1")
+umap2 <- test_umap %>% 
+  as.data.frame() %>%
+  mutate(label = factor(test_label), is_train = "0")
+umap1 %>%
+  bind_rows(umap2) %>%
+  ggplot(aes(x = V1, y = V2, color = label, shape = is_train)) + 
+    geom_point(size = 3, alpha = 0.1) + 
+    scale_shape_manual(values = c(1,4)) +
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "default parameter + test")
+
+```
+
+# Python Implementetion
+
+事前にpython版のインストールしておく必要があるが利用できるみたい
+
+```{r}
+start_time <- proc.time()
+data_umap <- umap::umap(train, random_state = 1234, method = "umap-learn")
+print(proc.time() - start_time)
+```
+
+
+
