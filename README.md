@@ -22,6 +22,7 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Example of Prophet](http://okiyuki99.github.io/HowToR/ex_prophet.html)
 * [Example of fastknn](http://okiyuki99.github.io/HowToR/ex_fastknn.html)
 * [Example of mixtools](http://okiyuki99.github.io/HowToR/ex_mixtools.html)
+* [Example of umap](http://okiyuki99.github.io/HowToR/ex_umap.html)
 
 ### Flexdashboard
 * [Example of datamodel and experiment](http://okiyuki99.github.io/HowToR/ex_flexdashboard_datamodel.html)
