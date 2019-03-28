@@ -38,6 +38,8 @@ library(dplyr)
 library(ggplot2)
 library(umap) #install.packages("umap")
 library(uwot) #devtools::install_github("jlmelville/uwot")
+library(dbscan) #for dbscan
+library(fpc) #for dbscan
 print(packageVersion("umap"))
 print(packageVersion("uwot"))
 ```
@@ -210,4 +212,43 @@ train_umap$embedding %>%
     theme_bw() + 
     theme(legend.position = "bottom") + 
     labs(x = "", y = "", title = "uwot")
+```
+
+## `fpc` DBSCAN
+
+```{r}
+start_time <- proc.time()
+fpc_dbs <- fpc::dbscan(train_umap$embedding, eps = 0.15, MinPts = 5, scale = F, method = "raw")
+print(proc.time() - start_time)
+```
+
+```{r}
+train_umap$embedding %>% 
+  as.data.frame() %>%
+  mutate(label = factor(fpc_dbs$cluster)) %>%
+  ggplot(aes(x = V1, y = V2, color = label)) + 
+    geom_point(size = 0.01, alpha = 1) + 
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "uwot + fpc::dbscan")
+```
+
+
+## `dbscan` DBSCAN
+
+```{r}
+start_time <- proc.time()
+dbs_dbs <- dbscan::dbscan(train_umap$embedding, eps = 0.15, minPts = 5)
+print(proc.time() - start_time)
+```
+
+```{r}
+train_umap$embedding %>% 
+  as.data.frame() %>%
+  mutate(label = factor(dbs_dbs$cluster)) %>%
+  ggplot(aes(x = V1, y = V2, color = label)) + 
+    geom_point(size = 0.01, alpha = 1) + 
+    theme_bw() + 
+    theme(legend.position = "bottom") + 
+    labs(x = "", y = "", title = "uwot + dbscan::dbscan")
 ```
