@@ -14,6 +14,7 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Example of summary table](http://okiyuki99.github.io/HowToR/ex_summary_table.html)
 * [Example of datamodelr](http://okiyuki99.github.io/HowToR/ex_datamodelr.html)
 * [Example of logger](http://okiyuki99.github.io/HowToR/ex_logger.html)
+* [Example of d3treeR](http://okiyuki99.github.io/HowToR/ex_d3treeR.html)
 
 ### Stats
 * [Example of power prop test](http://okiyuki99.github.io/HowToR/ex_power_prop_test.html)

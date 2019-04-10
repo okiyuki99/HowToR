@@ -1,0 +1,138 @@
+---
+title: "Ex d3treeR"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* d3treeRを触ってみた
+* 参考
+    * [d3treeR/d3treeR](https://github.com/d3treeR/d3treeR)
+    * [Rで解析：インタラクティブなTreeMapを作成「d3treeR」パッケージ](https://www.karada-good.net/analyticsr/r-372)
+* d3treeというパッケージもあるので注意
+    * [metrumresearchgroup/d3Tree](https://github.com/metrumresearchgroup/d3Tree)
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(data.tree)
+library(ggplot2)
+library(plotly)
+library(treemap)
+library(d3treeR) # devtools::install_github("d3treeR/d3treeR")
+library(ggmosaic) # devtools::install_github("haleyjeppson/ggmosaic")
+print(packageVersion("treemap"))
+print(packageVersion("d3treeR"))
+```
+
+## Data Prep
+
+```{r}
+data("GNI2014")
+#data(GNI2010)
+str(GNI2014)
+```
+
+# Treemap
+
+```{r}
+tm <-  treemap(
+   GNI2014,
+   index = c("continent", "iso3"),
+   vSize = "population",
+   vColor = "GNI",
+   type = "value",
+   draw = F
+)
+str(tm)
+```
+
+# d3tree
+
+```{r}
+d3tree(tm, rootname = "World")
+```
+
+# d3tree2
+
+```{r}
+d3tree2(tm, rootname = "World")
+```
+
+# Case 2
+
+```{r}
+n <- 300
+df <- data.frame(index1 = sample(c("PC", "Mobile", "Tablet"), n, replace = TRUE),
+                 index2 = paste0("Visit", sample(1:10, n, replace = TRUE)),
+                 val = sample(5:30, n, replace = TRUE)) %>%
+  mutate(ord = as.numeric(factor(index1, levels = c("PC","Mobile","Tablet"), labels = c(1,2,3))))
+
+str(df)
+
+d3tree2(
+  treemap(df, 
+          index = c("index1","index2"),
+          vSize = "val",
+          algorithm = "pivotSize",
+          palette = colorRampPalette(c("#f94560", "#a87963", "#4b61ba"))(length(unique(df[, 1]))))
+  , rootname = "TEST"
+)
+```
+
+```{r}
+d3tree(
+  treemap(df, 
+          index = c("index1","index2"),
+          vSize = "val",
+          type = "index",
+          format.legend = list(scientific = FALSE, big.mark = " "),
+          algorithm = "pivotSize",
+          fontsize.labels = 20,
+          fontsize.legend = 20,
+          inflate.labels = T,
+          sortID = "ord",
+          eval.labels = T,
+          force.print.labels = T,
+          palette = colorRampPalette(c("#f94560", "#a87963", "#4b61ba"))(length(unique(df[, 1]))))
+  ,rootname = "GROUP"
+  ,celltext = "name"
+)
+```
+
+
+# ggmosaic
+
+```{r}
+library(ggmosaic) # devtools::install_github("haleyjeppson/ggmosaic")
+g <-  ggplot(data = fly) + geom_mosaic(aes(x = product(RudeToRecline), fill = RudeToRecline), na.rm = TRUE) 
+
+g <- ggplot(data = fly) +
+  geom_mosaic(aes(x = product(DoYouRecline, RudeToRecline), fill=DoYouRecline), na.rm=TRUE)
+#g <- ggplot(data = fly) +
+#  geom_mosaic(aes(x = product(RudeToRecline), fill=DoYouRecline)) 
+#plotly::ggplotly(g)
+```
+
+
