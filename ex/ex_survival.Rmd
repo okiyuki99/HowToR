@@ -1,0 +1,111 @@
+---
+title: "Ex Survival"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* 生存時間分析の練習
+    * 参考 : https://rpubs.com/xvalda/survival
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(survival)
+library(survminer) # install.packages("survminer")
+library(ranger)
+library(skimr)
+library(ggplot2)
+library(dplyr)
+library(ggfortify)
+```
+
+## Data Prep
+
+```{r}
+data(veteran)
+str(veteran)
+```
+
+## Preprocess
+
+```{r}
+veteran$trt <- factor(veteran$trt, labels = c("standard", "test"))
+veteran$prior <- factor(veteran$prior, labels = c("no", "yes"))
+```
+
+## Summary
+
+
+```{r}
+skimr::skim(veteran)
+```
+
+
+
+```{r}
+ggplot(data = veteran, aes(x = time, fill = trt)) + 
+  geom_histogram() + 
+  facet_grid(trt ~.) + 
+  ggtitle("Figure 1. Distribution of time-to-event by type of treatment")
+```
+
+# Kaplan-Meier Analytics
+
+## Fit
+
+```{r}
+fit <- survfit(Surv(time, status) ~ trt, data = veteran)
+fit <- survfit(Surv(time, status) ~ trt, data = veteran)
+summary(fit)$table
+```
+
+## Plot Survival
+
+```{r}
+ggsurvplot(
+  fit,
+  pval = T,              #displays p-value of log-rank test, if p-value < 0.05, then the difference between the two curves are statistically significant
+  conf.int = F,         
+  xlab = "Time in days",
+  break.time.by = 150,      
+  ggtheme = theme_light(),  # customize theme with a grid for better readability 
+  risk.table = "abs_pct",   # absolute number and percentage at risk
+  risk.table.y.text.col = T,# colour risk table text annotations
+  risk.table.y.text = F,    # show bars instead of names in text annotations
+                            # in legend of risk table.
+  ncensor.plot = T,         # plot the number of censored subjects at time t
+  surv.median.line = "hv"   # add the median survival pointer
+)
+```
+
+## Plot Event
+
+```{r}
+ggsurvplot(
+  fit,
+  conf.int = F,
+  ggtheme = theme_bw(), 
+  fun = "event")
+```
+
