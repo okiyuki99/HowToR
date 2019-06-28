@@ -1,0 +1,66 @@
+---
+title: "Ex Difference in Difference"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* DIDの練習
+* [統計的因果推論(1): 差分の差分法(Difference-in-Differences)をRで回してみる](https://tjo.hatenablog.com/entry/2016/08/02/190000) はわかりやすいな
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(knitr)
+```
+ 
+
+# mean
+
+`lm`で推定する
+
+didが有意差でてるので、DID効果が有意にある
+
+```{r}
+df <- data.frame(metric = round(c(rep(c(rnorm(1,10000,100),rnorm(1,10000,100)+5000,rnorm(1,20000,100),rnorm(1,20000,100)+7500),4),rep(c(rnorm(1,10000,100),rnorm(1,10000,100)+100,rnorm(1,9000,100),rnorm(1,9000,100)+100),4)),0),
+                 group = c(rep(1,16),rep(0,16)),
+                 post = rep(c(0,1),8))
+df$did <- df$group * df$post
+model <- lm(metric~., df)
+summary(model)
+```
+
+
+# Ratio 
+
+`glm`のbinomialでDID効果を推定する
+
+didが有意差でてるので、DID効果が有意にある
+
+```{r}
+df <- data.frame(ncv=c(12000,11000,10500,11500),cv=c(1000,3000,1000,1500), group = c(1,1,0,0), post = c(0,1,0,1), did = c(0,1,0,0))
+model <- glm(cbind(cv, ncv)~., df, family = binomial)
+summary(model)
+```
+```
+
