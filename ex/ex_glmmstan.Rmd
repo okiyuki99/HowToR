@@ -1,0 +1,86 @@
+---
+title: "Ex glmmstan"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* GLMMをベイズ推定するglmmstanパッケージを使ってみる
+    * 清水先生開発したやつ
+* 参考 : [glmmstanパッケージを作ってみた](https://www.slideshare.net/simizu706/glmmstan-55104119)
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+#devtools::install_github("norimune/glmmstan")
+library(glmmstan)
+library(ggmcmc)
+
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+ 
+## Data 
+
+```{r}
+data("baseball")
+baseball %>%
+  head(20) %>% 
+  kable(align = "r") %>% kable_styling(c("striped","bordered"))
+
+dat <- baseball
+print(paste0("HRの平均値:",mean(dat$HR)))
+```
+
+
+# HRの平均値を求める
+
+## Fitting
+
+```{r}
+model0 <- glmmstan(HR ~ 1, data = dat)
+output_result(model0)
+output_stan(model0)
+```
+
+## 事後分布を見てみる
+
+```{r}
+beta <- output_beta(model0)
+plot(density(beta$Intercept))
+beta <- output_beta(model0)
+
+m <- ggmcmc::ggs(model0)
+ggmcmc::ggs_density(m, family = "beta")
+```
+
+# チームごとにHRの効果が違うモデルとして変量効果を考える
+
+```{r}
+model4 <- glmmstan(salary ~ HR + K + (HR | team), data = dat, family = "lognormal")
+output_result(model4)
+output_stan(model4)
+```
+
