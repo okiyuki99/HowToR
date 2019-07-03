@@ -22,6 +22,7 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Example of power prop test](http://okiyuki99.github.io/HowToR/ex_power_prop_test.html)
 * [Example of Difference in Difference](http://okiyuki99.github.io/HowToR/ex_did.html)
 * [Example of glmmstan](http://okiyuki99.github.io/HowToR/ex_glmmstan.html)
+* [Study of KDD2017 Peeking](http://okiyuki99.github.io/HowToR/ex_kdd2017_peeking.html)
 
 ### Model
 * [Example of Prophet](http://okiyuki99.github.io/HowToR/ex_prophet.html)

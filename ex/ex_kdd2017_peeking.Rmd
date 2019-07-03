@@ -1,0 +1,137 @@
+---
+title: "Ex kdd2017 peeking"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* False Positive Ratioが増加する図（Fig.2）をえがく
+* N(0,1)からObservation 10ずつ追加していって10000サンプルサイズで10000回シミュレーション回してみる
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(logger)
+```
+ 
+# Simulations 1
+
+```{r}
+data <- data.frame(stringsAsFactors = F)
+simulations <- 1000
+
+for(n in seq(100, 10000, 100)){
+  logger::log_info(n)
+  s <- sapply(1:simulations, function(i){
+    set.seed(i)
+    a <- rnorm(n, mean = 0, sd = 1)
+    b <- rnorm(n, mean = 0, sd = 1)
+    pval <- t.test(a, b)$p.value
+    return(pval)
+  })
+  data.frame(observations = n, pval = s) %>%
+    group_by(observations) %>%
+    dplyr::summarize(e010 = sum(pval < 0.10) / simulations,
+                     e005 = sum(pval < 0.05) / simulations,
+                     e001 = sum(pval < 0.01) / simulations) %>%
+    ungroup() -> tmp
+  data <- bind_rows(data, tmp) 
+}
+```
+
+# Plot 1
+
+```{r}
+data %>%
+  tidyr::gather(key, value, -observations) %>%
+  ggplot(aes(x = observations, y = value, group = key, color = key)) + geom_line()
+
+data %>%
+  tidyr::gather(key, value, -observations) %>%
+  group_by(key) %>%
+  mutate(cum_val = cumsum(value)) %>%
+  ggplot(aes(x = observations, y = cum_val, group = key, color = key)) + geom_line()
+
+``` 
+
+# Simulations 2
+
+```{r}
+simulations <- 10000
+sample_size <- 10000
+times <- 1000
+```
+
+```{r, eval = F}
+sim_func <- function(simulations, sample_size, times, alpha){
+  obs <- sapply(1:simulations, function(j){
+    data_a <- c()
+    data_b <- c()
+    n <- sample_size / times
+    for(i in 1:(times+1)){
+      a <- rnorm(n / 2, mean = 0, sd = 1)
+      b <- rnorm(n / 2, mean = 0, sd = 1)
+      data_a <- c(data_a, a)
+      data_b <- c(data_b, b)
+      pval <- t.test(data_a, data_b, alternative = "two.sided", paired = F, var.equal = F)$p.value
+      if(pval < alpha){
+        break
+      }
+    }
+    return(length(data_a) * 2)
+  })
+  
+  data.frame(alpha = as.character(alpha), obs = obs, stringsAsFactors = F) %>%
+    dplyr::group_by(alpha, obs) %>%
+    dplyr::count() %>%
+    ungroup() %>%
+    mutate(false_positive_prob = cumsum(n) / simulations) -> df
+  df
+}
+
+df_010 <- sim_func(simulations, sample_size, times, alpha = 0.1)
+df_005 <- sim_func(simulations, sample_size, times, alpha = 0.05)
+df_001 <- sim_func(simulations, sample_size, times, alpha = 0.01)
+
+df <- bind_rows(df_010, df_005, df_001) 
+saveRDS(df, "../data/ex_kdd2017_experiment2.rds")
+```
+
+
+```{r}
+df <- readRDS("../data/ex_kdd2017_experiment2.rds")
+df %>%
+  filter(obs <= sample_size) %>%
+  mutate(alpha = format(as.numeric(alpha), nsmall = 2)) %>%
+  ggplot(aes(x = obs, y = false_positive_prob, group = alpha, color = alpha, linetype = alpha)) + 
+    geom_line(size = 1) + 
+    #geom_point(shape = 21, size = 1) + 
+    scale_y_continuous(breaks = seq(0.0, 0.8, by=0.2), limits = c(0,0.8)) +
+    theme_bw() + 
+    labs(x = "# of observations", y = "False positive probability")
+```
+
