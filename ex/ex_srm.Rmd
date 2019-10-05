@@ -1,0 +1,140 @@
+---
+title: "なぜSRMはだめか？"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Prepare
+
+```{r}
+set.seed(1234)
+library(dplyr)
+library(ggplot2)
+library(ggbeeswarm)
+library(ggthemes)
+```
+
+
+# Case 1
+
+一番理想的なケース
+
+* C : 4グループ × 250人で1000
+* T : 4グループ × 250人で1000
+* Effect : 2
+
+```{r}
+lv <- 4
+sample_size <- 250
+effect <- 2
+C <- c(rnorm(sample_size, 10, 1), rnorm(sample_size, 11, 1), rnorm(sample_size, 12, 1), rnorm(sample_size, 13, 1))
+T1 <- c(rnorm(sample_size, 10 + 2, 1), rnorm(sample_size, 11 + 2, 1), rnorm(sample_size, 12 + 2, 1), rnorm(sample_size, 13 + 2, 1))
+
+colors_C <- tableau_gradient_pal("Blue")(seq(0.2, 0.8, length = lv))
+colors_T1 <- tableau_gradient_pal("Orange")(seq(0.2, 0.8, length = lv))
+colors <- c(colors_C, colors_T1)
+
+data.frame(
+  variant = c(rep('C',sample_size * lv),rep('T',sample_size * lv)),
+  user_level = c(sort(rep(paste0('C', seq(lv)), sample_size)),sort(rep(paste0('T', seq(lv)), sample_size))),
+  value = c(C, T1)
+  ) %>%
+  ggplot(aes(x = variant, y = value, group = variant, color = user_level)) + 
+    geom_quasirandom(alpha = 0.5) +
+    geom_line(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", linetype = "dashed") +
+    geom_point(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", shape = 1, size = 3) +
+    theme_bw() + 
+    theme(legend.position = "top") +
+  　scale_color_manual(values =  colors) + 
+    scale_y_continuous(breaks = seq(0, 20, by=1)) + 
+    labs(title = paste0("Effect size : ", round(mean(T1) - mean(C),3)))
+```
+
+# Case 2
+
+Tだけすべてのユーザレベルで500人ずつ少ないケース
+
+* C : 4グループ × 250人で1000
+* T : 4グループ × 200人で800
+* Effect : 2
+
+```{r}
+lv <- 4
+size_C <- 250
+size_T <- 200
+effect <- 2
+C <- c(rnorm(size_C, 10, 1), rnorm(size_C, 11, 1), rnorm(size_C, 12, 1), rnorm(size_C, 13, 1))
+T1 <- c(rnorm(size_T, 10 + 2, 1), rnorm(size_T, 11 + 2, 1), rnorm(size_T, 12 + 2, 1), rnorm(size_T, 13 + 2, 1))
+
+colors_C <- tableau_gradient_pal("Blue")(seq(0.2, 0.8, length = lv))
+colors_T1 <- tableau_gradient_pal("Orange")(seq(0.2, 0.8, length = lv))
+colors <- c(colors_C, colors_T1)
+
+data.frame(
+  variant = c(rep('C',size_C * lv),rep('T',size_T * lv)),
+  user_level = c(sort(rep(paste0('C', seq(lv)), size_C)),sort(rep(paste0('T', seq(lv)), size_T))),
+  value = c(C, T1)
+  ) %>%
+  ggplot(aes(x = variant, y = value, group = variant, color = user_level)) + 
+    geom_quasirandom(alpha = 0.5) +
+    geom_line(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", linetype = "dashed") +
+    geom_point(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", shape = 1, size = 3) +
+    theme_bw() + 
+    theme(legend.position = "top") +
+  　scale_color_manual(values =  colors) + 
+    scale_y_continuous(breaks = seq(0, 20, by=1)) +  
+    labs(title = paste0("Effect size : ", round(mean(T1) - mean(C),3)))
+```
+
+
+# Case 3
+
+Tだけ一番ライトユーザが2000人少ないケース
+
+* C : 4グループ × 250人 = 1000
+* T : 1グループ × 50人 + 3グループ × 250人 = 800
+* Effect : 2
+
+```{r}
+lv <- 4
+size_C <- 250
+size_T <- 250
+effect <- 2
+C <- c(rnorm(size_C, 10, 1), rnorm(size_C, 11, 1), rnorm(size_C, 12, 1), rnorm(size_C, 13, 1))
+T1 <- c(rnorm(50, 10 + 2, 1), rnorm(size_T, 11 + 2, 1), rnorm(size_T, 12 + 2, 1), rnorm(size_T, 13 + 2, 1))
+
+colors_C <- tableau_gradient_pal("Blue")(seq(0.2, 0.8, length = lv))
+colors_T1 <- tableau_gradient_pal("Orange")(seq(0.2, 0.8, length = lv))
+colors <- c(colors_C, colors_T1)
+
+data.frame(
+  variant = c(rep('C',size_C * lv), rep('T', 800)),
+  user_level = c(sort(rep(paste0('C', seq(lv)), size_C)), rep('T1',50), sort(rep(paste0('T', seq(2,lv)), size_T))),
+  value = c(C, T1)
+  ) %>%
+  ggplot(aes(x = variant, y = value, group = variant, color = user_level)) + 
+    geom_quasirandom(alpha = 0.5) +
+    geom_line(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", linetype = "dashed") +
+    geom_point(data = data.frame(variant = c('C','T'), value = c(mean(C),mean(T1))), aes(x = variant, y = value, group = 1), color = "#111111", shape = 1, size = 3) +
+    theme_bw() + 
+    theme(legend.position = "top") +
+  　scale_color_manual(values =  colors) + 
+    scale_y_continuous(breaks = seq(0, 20, by=1)) + 
+    labs(title = paste0("Effect size : ", round(mean(T1) - mean(C),3)))
+```
