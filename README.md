@@ -32,6 +32,7 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 
 ### Research
 * [Example of Sample Ratio Mismatch](http://okiyuki99.github.io/HowToR/ex_srm.html)
+* [Example of Novelty Effect in WSDM2019 Linkedin](http://okiyuki99.github.io/HowToR/ex_wsdm2019.html)
 
 ### Flexdashboard
 * [Example of datamodel and experiment](http://okiyuki99.github.io/HowToR/ex_flexdashboard_datamodel.html)

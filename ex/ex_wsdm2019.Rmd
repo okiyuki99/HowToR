@@ -1,0 +1,92 @@
+---
+title: "wsdm2019"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary
+
+* Novelty Effectの検知を実験してみる
+* Ref: http://gingi99.hatenablog.com/entry/2019/08/24/212630
+
+# Prepare
+
+```{r}
+set.seed(1234)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+# Data 
+
+14日間の実験で、各日のSingle Day Effect(Lift %)とSEを適当に作ってみる
+
+```{r}
+val_T <- 14
+val_Lift <- rev(1.3^(rnorm(val_T, 0, 0.3) + 1:val_T) / 10)
+val_SE <- abs(rnorm(val_T, 0, 0.02))
+#val_Lift <- rev(1.01^(rnorm(val_T, 0, 0.3) + log2(1:val_T)) / 10) #NG
+
+data.frame(x = 1:val_T, y = val_Lift) %>%
+  ggplot(aes(x = x, y = y)) + 
+    geom_line() + 
+    geom_point()
+```
+
+# Novelty Effect 
+
+## Step 1
+
+* 決定係数0.8以上ならOK
+
+```{r}
+alpha <- 0.35
+gamma <- 2
+
+df <- data.frame(y = val_Lift, x1 = 1 / (seq(1:val_T) ^ alpha), x2 = 1 / (seq(1:val_T) ^ gamma))
+model <- lm(y ~ x1 + x2, data = df)
+summary(model)
+```
+
+## Step 2
+
+* 最大と最小のLiftに差があるかをZ検定して評価
+* 求め方は以下を参考に
+  * https://stackoverflow.com/questions/42535035/how-to-test-if-two-lift-values-are-significantly-different-from-each-other
+  * http://yoshida931.hatenablog.com/entry/2017/09/18/130214
+  * https://www.cyclismo.org/tutorial/R/pValues.html#calculating-a-single-p-value-from-a-normal-distribution
+
+```{r}
+m1i <- which.max(val_Lift)
+m2i <- which.min(val_Lift)
+
+z_value <- (val_Lift[m1i] - val_Lift[m2i]) / (val_Lift[m1i] * val_SE[m1i] + val_Lift[m2i] * val_SE[m2i])
+
+p_value <- 2*pnorm(-abs(z_value))
+#2*pnorm(-1.96)
+
+if(p_value < 0.005){
+  print(paste0("Novelty Effect : ", p_value))
+}else{
+  print("Non-Novelty Effect")
+}
+```
+
+
