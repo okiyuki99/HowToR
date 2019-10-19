@@ -299,3 +299,19 @@ for(i in 1:2){
     print
 }
 ```
+
+# Want a new LINE
+
+**よくわからないが** ある程度文字列が長いものがあるときに改行がうまくいくみたい。test2カラムを抜くとだめ
+
+```{r}
+dt %>%
+  mutate(sum_wt = sum(wt)) %>%
+  mutate(percent = round(100 * wt/ sum_wt, 1)) %>%
+  mutate(wt = paste0(wt, "\r\n(",percent,"%)")) %>%
+  mutate(test0 = "aa\r\naa") %>% 
+  mutate(test1 = "aaa\r\naaa") %>% 
+  mutate(test2 = "100000000000000000000\r\n1000000000000000000000000000000000") %>% 
+  #mutate(test = paste0("a\r\na")) %>%
+  kable(align = "r") %>% kable_styling(c("striped","bordered")) #%>% add_header_above(setNames(c(9),  c("TEST"))) 
+```
