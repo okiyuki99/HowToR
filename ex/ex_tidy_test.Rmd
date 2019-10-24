@@ -1,0 +1,64 @@
+---
+title: "tidy statistical test"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* N個のグループ（日付とか）でpurrr + broomで効率よくfisher.testを実行する
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+```{r, message=F, warning=F}
+set.seed(1234)
+options(scipen=10)
+library(knitr)
+library(dplyr)
+library(purrr)
+library(broom)
+```
+
+# Prepare data for `fisher.test`
+
+```{r}
+df <- data.frame(date = c(1,1,2,2),
+           group = c("A","B","A","B"),
+           uu = c(120,123,115,114),
+           y_val = c(30,32,26,23))
+knitr::kable(df)
+```
+
+# Using purrr + broom
+
+```{r}
+df %>%
+  mutate(n_val = uu - y_val) %>%
+  dplyr::select(date, y_val, n_val) %>%
+  dplyr::group_by(date) %>%
+  tidyr::nest(.key = "experiment") %>%
+  mutate(fisher_test = map(experiment, ~ {
+    broom::tidy(fisher.test(as.matrix(.x)))
+  })) %>%
+  dplyr::select(date, fisher_test) %>%
+  tidyr::unnest()
+```
+
+
+
