@@ -1,0 +1,112 @@
+---
+title: "N個以上のGroupのSDを結合して1つのSDを出す"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* N個のグループでMeanとSDがあるとき、結合して1つのSDを出す
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+```{r, message=F, warning=F}
+set.seed(1234)
+options(scipen=10)
+library(knitr)
+```
+
+# 2 group
+
+## Data Prep 1
+
+```{r}
+n1 <- 120
+n2 <- 80
+x1 <- rnorm(n1, 35, 45)
+x2 <- rnorm(n2, 31, 11)
+x = c(x1, x2)
+print(paste0("x1 : ", mean(x1), " _ ", sd(x1)))
+print(paste0("x2 : ", mean(x2), " _ ", sd(x2)))
+print(paste0("x : ", mean(x), " _ ", sd(x)))
+```
+
+## Mean
+
+```{r}
+print((n1 * mean(x1) + n2 * mean(x2)) / (n1 + n2))
+```
+
+## SD
+
+あったのでOK : https://www.researchgate.net/post/How_to_combine_standard_deviations_for_three_groups
+
+```{r}
+vv <- (n1 - 1) * var(x1) + (n2 - 1) * var(x2) + n1 * (mean(x1) - mean(x))^2 + n2 * (mean(x2) - mean(x))^2
+print(sqrt(vv / (n1 + n2 - 1)))
+```
+
+## SD 2 
+
+あったのでOK : https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
+
+```{r}
+q1 <- (n1-1)*var(x1) + n1*mean(x1)^2
+q2 <- (n2-1)*var(x2) + n2*mean(x2)^2
+qc <- q1 + q2
+print(sqrt( (qc - (n1+n2)*mean(x)^2)/(n1+n2-1)))
+```
+
+# 3 group
+
+## Data Prep 2
+
+3 Groupにする
+
+```{r}
+n3 <- 40
+x3 <- rnorm(n3, 32, 22)
+x <- c(x1, x2, x3)
+print(paste0("x3 : ", mean(x3), " _ ", sd(x3)))
+print(paste0("x : ", mean(x), " _ ", sd(x)))
+```
+
+## Try SD 1
+
+あってるのでOK
+
+```{r}
+vv <- (n1 - 1) * var(x1) + (n2 - 1) * var(x2) + (n3 - 1) * var(x3) + n1 * (mean(x1) - mean(x))^2 + n2 * (mean(x2) - mean(x))^2 + n3 * (mean(x3) - mean(x))^2
+print(sqrt(vv / (n1 + n2 + n3- 1)))
+```
+
+## Try SD 2
+
+あってるのでOK
+
+```{r}
+q1 <- (n1-1)*var(x1) + n1*mean(x1)^2
+q2 <- (n2-1)*var(x2) + n2*mean(x2)^2
+q3 <- (n3-1)*var(x3) + n3*mean(x3)^2
+
+qc <- q1 + q2 + q3
+print(sqrt((qc - (n1+n2+n3)*mean(x)^2)/(n1+n2+n3-1)))
+
+```
+
