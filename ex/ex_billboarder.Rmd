@@ -1,0 +1,221 @@
+---
+title: "billboarder"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary
+
+* billboarder (NAVERが作ってるOSSのJSライブラリのRラッパー。MITライセンス)を試す
+* Ref :
+    * https://github.com/dreamRs/shinyapps/blob/master/ratp_traffic/funs/graph_profil_horaire.R
+
+# Prepare
+
+```{r}
+set.seed(1234)
+library(dplyr)
+library(tidyr)
+library(billboarder)
+print(packageVersion("billboarder"))
+```
+
+
+# Data 
+
+横持ちデータを用意
+
+```{r}
+data("equilibre_mensuel")
+print(head(equilibre_mensuel))
+```
+
+# line charts
+
+## Basic
+
+```{r}
+billboarder() %>% 
+  bb_linechart(
+    data = equilibre_mensuel %>% dplyr::select(date, solde, consommation, production), 
+    type = "spline"
+  )
+```
+
+## Application
+
+```{r}
+billboarder() %>% 
+  bb_linechart(
+    data = equilibre_mensuel %>% dplyr::select(date, solde, consommation, production), 
+    type = "spline"
+  ) %>%
+  bb_x_axis(tick = list(format = "%Y-%m", fit = T)) %>%
+  bb_x_grid(show = T) %>% 
+  bb_y_grid(show = T) %>%
+  bb_legend(position = "inset") %>%
+    bb_zoom(
+    enabled = list(type = "drag"),
+    resetButton = list(text = "Unzoom")
+  ) %>% 
+  bb_labs(title = "Title Dayo",
+          y = "Y axis Name",
+          caption = "Caption")
+```
+
+## Application
+
+縦長うまくうごかない
+
+```{r, eval = F}
+equilibre_mensuel %>% 
+  dplyr::select(date, solde, consommation, production) %>%
+  tidyr::gather(key, value, -date) %>%
+  billboarder(data = .) %>% 
+  bb_linechart(
+    mapping = bbaes(x = date, y = value), color = key, type = "spline"
+  )
+```
+
+## Summary
+
+```{r}
+# line chart
+billboarder() %>% 
+  bb_linechart(
+    data = equilibre_mensuel[, c("date", "consommation", "production")], 
+    type = "spline"
+  ) %>% 
+  bb_x_axis(tick = list(format = "%Y-%m", fit = FALSE)) %>% 
+  bb_x_grid(show = TRUE) %>% 
+  bb_y_grid(show = TRUE) %>% 
+  bb_colors_manual("consommation" = "firebrick", "production" = "forestgreen") %>% 
+  bb_legend(position = "right") %>% 
+  bb_subchart(show = TRUE, size = list(height = 30)) %>% 
+  bb_labs(title = "Monthly electricity consumption and production in France (2007 - 2017)",
+          y = "In megawatt (MW)",
+          caption = "Data source: RTE (https://opendata.rte-france.com)")
+```
+
+# Indometh
+
+```{r}
+data(Indometh)
+head(Indometh, 20)
+Indometh$Subject <- paste0("s",as.character(Indometh$Subject))
+```
+
+## Line Plot
+
+```{r}
+billboarder(data = Indometh) %>%
+  bb_linechart(
+    mapping = bbaes(x = time, y = conc, group = Subject)
+  ) %>%
+  bb_y_grid(show = T) %>%
+  bb_legend(position = "inset") %>%
+  bb_zoom(
+    enabled = list(type = "drag"),
+    resetButton = list(text = "Unzoom")
+  ) %>%
+  bb_title(text = "Indometh1", position = "center") %>%
+  bb_y_axis(
+    tick = list(format = htmlwidgets::JS("d3.format(',')"))
+  ) %>% bb_tooltip(
+    linked = list(name = "tooltip-profil-horaire"),
+    format = list(value = htmlwidgets::JS("d3.format(',')"))
+  )
+```
+
+```{r}
+billboarder(data = Indometh) %>%
+  bb_linechart(
+    mapping = bbaes(x = time, y = conc, group = Subject)
+  ) %>%
+  bb_y_grid(show = T) %>%
+  bb_legend(position = "inset") %>%
+  bb_zoom(
+    enabled = list(type = "drag"),
+    resetButton = list(text = "Unzoom")
+  ) %>%
+  bb_title(text = "Indometh2", position = "center") %>%
+  bb_y_axis(
+    tick = list(format = htmlwidgets::JS("d3.format(',')"))
+  ) %>% bb_tooltip(
+    linked = list(name = "tooltip-profil-horaire"),
+    format = list(value = htmlwidgets::JS("d3.format(',')"))
+  )
+```
+
+```{r}
+Indometh_wide <- Indometh %>% 
+  tidyr::spread(Subject, conc)
+Indometh_wide
+
+billboarder(data = Indometh_wide) %>%
+  bb_linechart() %>%
+  bb_y_grid(show = T) %>%
+  bb_legend(position = "inset") %>%
+  bb_zoom(
+    enabled = list(type = "drag"),
+    resetButton = list(text = "Unzoom")
+  ) %>%
+  bb_title(text = "Indometh2", position = "center") %>%
+  bb_y_axis(
+    tick = list(format = htmlwidgets::JS("d3.format(',')"))
+  ) %>% bb_tooltip(
+    linked = list(name = "tooltip-profil-horaire"),
+    format = list(value = htmlwidgets::JS("d3.format(',')"))
+  )
+```
+
+
+## Bar Plot
+
+```{r}
+data(CO2)
+
+CO2_mean <- CO2 %>% 
+  group_by(Type, Treatment) %>% 
+  dplyr::summarise(mean_conc = mean(conc)) %>%
+  tidyr::spread(Treatment, mean_conc)
+CO2_mean
+
+
+billboarder(data = CO2_mean) %>%
+  bb_barchart(stacked = F) %>%
+  bb_colors_manual(Lift = "goldenrod") %>%
+  bb_x_grid(show = T) %>%
+  bb_y_grid(show = T) %>%
+  bb_legend(position = "inset") %>%
+  bb_zoom(
+    enabled = list(type = "drag"),
+    resetButton = list(text = "Unzoom")
+  ) %>%
+  bb_title(text = title, position = "center") %>%
+  bb_y_axis(
+    tick = list(format = htmlwidgets::JS("d3.format(',')"))
+  ) %>%
+  bb_tooltip(
+    linked = list(name = "tooltip-profil-horaire"),
+    format = list(value = htmlwidgets::JS("d3.format(',')"))
+  )
+```
+
+
