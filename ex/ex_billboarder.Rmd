@@ -113,7 +113,7 @@ billboarder() %>%
           caption = "Data source: RTE (https://opendata.rte-france.com)")
 ```
 
-# Indometh
+# Indometh Data Check
 
 ```{r}
 data(Indometh)
@@ -121,7 +121,7 @@ head(Indometh, 20)
 Indometh$Subject <- paste0("s",as.character(Indometh$Subject))
 ```
 
-## Line Plot
+# Line Plot with long format
 
 ```{r}
 billboarder(data = Indometh) %>%
@@ -134,34 +134,13 @@ billboarder(data = Indometh) %>%
     enabled = list(type = "drag"),
     resetButton = list(text = "Unzoom")
   ) %>%
-  bb_title(text = "Indometh1", position = "center") %>%
+  bb_title(text = "Indometh", position = "center") %>%
   bb_y_axis(
     tick = list(format = htmlwidgets::JS("d3.format(',')"))
-  ) %>% bb_tooltip(
-    linked = list(name = "tooltip-profil-horaire"),
-    format = list(value = htmlwidgets::JS("d3.format(',')"))
   )
 ```
 
-```{r}
-billboarder(data = Indometh) %>%
-  bb_linechart(
-    mapping = bbaes(x = time, y = conc, group = Subject)
-  ) %>%
-  bb_y_grid(show = T) %>%
-  bb_legend(position = "inset") %>%
-  bb_zoom(
-    enabled = list(type = "drag"),
-    resetButton = list(text = "Unzoom")
-  ) %>%
-  bb_title(text = "Indometh2", position = "center") %>%
-  bb_y_axis(
-    tick = list(format = htmlwidgets::JS("d3.format(',')"))
-  ) %>% bb_tooltip(
-    linked = list(name = "tooltip-profil-horaire"),
-    format = list(value = htmlwidgets::JS("d3.format(',')"))
-  )
-```
+# Line Plot with wide format
 
 ```{r}
 Indometh_wide <- Indometh %>% 
@@ -176,17 +155,13 @@ billboarder(data = Indometh_wide) %>%
     enabled = list(type = "drag"),
     resetButton = list(text = "Unzoom")
   ) %>%
-  bb_title(text = "Indometh2", position = "center") %>%
+  bb_title(text = "Indometh", position = "center") %>%
   bb_y_axis(
     tick = list(format = htmlwidgets::JS("d3.format(',')"))
-  ) %>% bb_tooltip(
-    linked = list(name = "tooltip-profil-horaire"),
-    format = list(value = htmlwidgets::JS("d3.format(',')"))
   )
 ```
 
-
-## Bar Plot
+# CO2 Data Check
 
 ```{r}
 data(CO2)
@@ -196,11 +171,13 @@ CO2_mean <- CO2 %>%
   dplyr::summarise(mean_conc = mean(conc)) %>%
   tidyr::spread(Treatment, mean_conc)
 CO2_mean
+```
 
+# Bar Plot
 
+```{r}
 billboarder(data = CO2_mean) %>%
   bb_barchart(stacked = F) %>%
-  bb_colors_manual(Lift = "goldenrod") %>%
   bb_x_grid(show = T) %>%
   bb_y_grid(show = T) %>%
   bb_legend(position = "inset") %>%
@@ -211,10 +188,6 @@ billboarder(data = CO2_mean) %>%
   bb_title(text = title, position = "center") %>%
   bb_y_axis(
     tick = list(format = htmlwidgets::JS("d3.format(',')"))
-  ) %>%
-  bb_tooltip(
-    linked = list(name = "tooltip-profil-horaire"),
-    format = list(value = htmlwidgets::JS("d3.format(',')"))
   )
 ```
 
