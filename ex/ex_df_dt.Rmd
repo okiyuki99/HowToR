@@ -1,0 +1,62 @@
+---
+title: "Ex df vs dt"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* df vs dt
+
+* shinyだったら、速度が求められるなら、data.table使ったほうが良いケースも多いかもしれない
+https://stackoverflow.com/questions/52709593/group-by-and-mutate-slow-on-large-dataframe
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(data.table)
+library(microbenchmark)
+```
+ 
+# Simulations 1
+
+```{r}
+pattern <- paste0(base::sample(letters, 100000, replace = T), base::sample(letters, 100000, replace = T), base::sample(letters, 100000, replace = T), base::sample(letters, 100000, replace = T))
+pattern1 <- base::sample(letters, 100000, replace = T)
+pattern2 <- base::sample(letters, 100000, replace = T)
+#unique(pattern) %>% length()
+df <- data.frame(pattern, pattern1, pattern2, num = rnorm(10000))
+
+#dt <- copy(df)
+#setDT(dt)
+
+dimension <- "pattern"
+
+microbenchmark(dp = df %>%
+                 dplyr::group_by(pattern1, pattern2, !!rlang::sym(dimension)) %>%
+                 dplyr::summarise(snum = sum(num, na.rm = T)), 
+               times = 1)
+```
+
+
+

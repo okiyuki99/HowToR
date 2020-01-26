@@ -1,0 +1,59 @@
+---
+title: "Ex Featuretools"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* PythonのFeaturetoolsのRラッパーを試す
+
+## Ref
+* [2019-01-17 特徴量生成、特徴量選択、ハイパーパラメータのチューニングを自動化するライブラリを使ってみた](https://dev.classmethod.jp/machine-learning/yoshim-featuretools-boruta-optuna/)
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+reticulate::use_python("/home/ooki/.pyenv/versions/3.7.2/bin/python", required = T)
+
+library(featuretoolsR)
+library(skimr)
+library(ggplot2)
+library(dplyr)
+library(ggfortify)
+```
+
+## Data Prep
+
+```{r}
+set_1 <- data.frame(key = 1:100, value = sample(letters, 100, T))
+set_2 <- data.frame(key = 1:100, value = sample(LETTERS, 100, T))
+```
+
+# Create entityset
+
+```{r}
+es <- as_entityset(set_1, index = "key", entity_id = "set_1", id = "demo")
+```
+
+
+

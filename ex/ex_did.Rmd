@@ -50,7 +50,6 @@ model <- lm(metric~., df)
 summary(model)
 ```
 
-
 # Ratio 
 
 `glm`のbinomialでDID効果を推定する

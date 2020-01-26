@@ -1,0 +1,26 @@
+---
+title: "ex formattable"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(formattable)
+```
+
+## Practice
+
+```{r}
+tmp <- mtcars 
+tmp %>% 
+  formattable(list(area(,(2:ncol(df))) ~  formatter(
+                              "span",
+                              x ~ percent(x / 100,1),
+                              style = x ~ style(color = ifelse(x  - tmp$carb > 2, "red", "black"),
+                                              font.weight = ifelse(x  - tmp$carb > 2, "bold",""),
+                                              "background-color" = ifelse(x  - tmp$carb > 2, "springgreen","")))
+                          )
+
+                   )
+```
+

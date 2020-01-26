@@ -32,13 +32,15 @@ knit: (function(inputFile, encoding) {
 ## libraries
 
 ```{r, message=F, warning=F}
-options(scipen=10)
 library(dplyr)
 library(knitr)
 
 library(ggplot2)
 library(ggrepel)
 library(ggforce)
+
+options(scipen=10)
+opts_chunk$set(out.width = '\\maxwidth')
 ```
 
 ## Data Prep

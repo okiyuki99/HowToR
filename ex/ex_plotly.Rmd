@@ -1,0 +1,51 @@
+---
+title: "Ex Plotly"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* plotlyを触る
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(dplyr)
+library(knitr)
+library(plotly)
+```
+
+# Area Plot
+
+```{r}
+sample_size <- 555
+p1 <- 0.1
+p2 <- 0.15
+
+pmf_as_is <- dbinom(0:sample_size, sample_size, p1)
+pmf_to_be <- dbinom(0:sample_size, sample_size, p2)
+
+data <- bind_rows(tibble(index = 0:sample_size, name = "ASIS", value = pmf_as_is), tibble(index = 0:sample_size, name = "TOBE", value = pmf_to_be))
+
+plot_ly(data, x = ~index, y = ~value, type = 'scatter', mode = 'lines', color = ~name, fill = 'tozeroy')
+```

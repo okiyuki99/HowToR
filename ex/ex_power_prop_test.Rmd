@@ -30,6 +30,7 @@ knit: (function(inputFile, encoding) {
 options(scipen=10)
 library(dplyr)
 library(ggplot2)
+library(plotly)
 library(knitr)
 library(broom)
 ```
@@ -116,20 +117,30 @@ mean2 <- Z
 print(glue::glue("Z:",Z))
 
 x <- seq(-4, 6, 0.1) # use for generating the x axis of the normal distribution
-data <- data.frame( x = x, y1 = dnorm(x, mean1, 1), y2 = dnorm(x, mean2, 1))
+data <- data.frame(x = x, y1 = dnorm(x, mean1, 1), y2 = dnorm(x, mean2, 1))
 
-ggplot(data, aes(x = x) ) +
-  geom_line( aes( y = y1, colour = 'H0 is true' ), size = 1.2 ) +
-  geom_line( aes( y = y2, colour = 'H1 is true' ), size = 1.2 ) +
-  geom_area(aes( y = y1, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'black' ) +
-  geom_area(aes( y = y2, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = 'blue', alpha = 0.3 ) +
-  labs( x = '', y = '', title = sprintf('p1 = %s, p2 = %s, size = %d', p1, p2, sample_size)) + 
-  theme( legend.title = element_blank() ) +
-  scale_colour_manual( breaks = c("H0 is true", "H1 is true"), 
-                       values = c("blue", "red") )
-
-print(glue::glue("power:",sum(data[data$x > qnorm(alpha/2,lower.tail = F),]$y2) / sum(data$y2)))
+power <- sum(data[data$x > qnorm(alpha/2,lower.tail = F),]$y2) / sum(data$y2) * 100 
+print(glue::glue("power:",power))
 ```
+
+```{r}
+ggplot(data, aes(x = x) ) +
+  geom_line(aes(y = y1, colour = 'H0 is true'), size = 0.5) +
+  geom_line(aes(y = y2, colour = 'H1 is true'), size = 0.5) +
+  geom_point(aes(y = y1, colour = 'H0 is true'), shape = 21, size = 1) +
+  geom_point(aes(y = y2, colour = 'H1 is true'), shape = 21, size = 1) +
+  geom_area(aes( y = y1, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = "#333333") +
+  geom_area(aes( y = y2, x = ifelse(x > qnorm(alpha/2, lower.tail = F), x, NA) ), fill = '#00CD00', alpha = 0.3) +
+  annotate("text", x = qnorm(alpha/2, lower.tail = F) + 0.5, y = 0.2, label=paste0("Power\r\n",round(power,1),"%")) +
+  labs(x = '', y = '', title = sprintf('p1 = %s, p2 = %s, size = %d', p1, p2, sample_size)) + 
+  scale_x_continuous(breaks = seq(-4,6,1)) +
+  theme(legend.title = element_blank() ) +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  scale_colour_manual(breaks = c("H0 is true", "H1 is true"), values = c("#104E8B", "#EE2C2C")) -> g
+ggplotly(g) %>% layout(legend = list(x = 0.8, y = 0.9))
+```
+
 
 # Data 2
 

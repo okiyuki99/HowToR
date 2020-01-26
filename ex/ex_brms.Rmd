@@ -1,0 +1,431 @@
+---
+title: "Ex brms"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: show
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* ベイズ階層モデリングをするためにbrmsを使ってみる
+* 参考 : 
+    * [brmsパッケージを用いたベイズモデリング入門](https://das-kino.hatenablog.com/entry/2018/12/15/230938)
+    * [Bayesian Linear Mixed Models: Random Intercepts, Slopes, and Missing Data](https://willhipson.netlify.com/post/bayesian_mlm/bayesian_mlm/) : Rブログで見つけた
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+#install.packages("brms") R >= 3.5以上がいる
+library(brms)
+print(packageVersion("brms"))
+
+library(haven)
+library(tidybayes)
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+ 
+
+## Data 
+
+```{r}
+dat <- mtcars
+dat$am <- as.factor(dat$am)
+head(dat) %>%
+  kable(align = "r") %>% kable_styling(c("striped","bordered"))
+```
+
+
+
+# Linear Model
+
+## lm
+
+wt / am / wt*am の回帰モデルを作る
+
+```{r}
+fit <- lm(mpg ~ wt * am, data = dat)
+summary(fit)
+```
+
+## brmでlm
+
+```{r}
+fit <- brms::brm(mpg ~ wt * am,
+           data = dat,
+           iter = 2000,
+           warmup = 1000,
+           seed = 1234,
+           chain = 4)
+summary(fit)
+```
+
+## WAICやLOOを計算してモデルを評価
+
+```{r}
+brms::waic(fit)
+brms::loo(fit)
+```
+
+## brmsで設定される事前分布を表示する
+
+どうやら回帰係数のクラス`b`は無情報事前分布が使われているみたい
+
+`intercept`はt分布
+
+```{r}
+brms::get_prior(mpg ~ wt * am, data = dat)
+```
+
+## brmsで事前分布を設定してみる
+
+`prior`というパラメータに入れるのみ
+
+```{r}
+fit2 <- brm(mpg ~ wt * am, data = dat,
+            iter = 2000,
+            warmup = 1000,
+            seed = 1234,
+            chain = 4,
+            prior = c(prior_string("normal(0, 10)", class = "b"),
+                      prior(student_t(3, 19, 10), class = Intercept),
+                      prior_(~student_t(3, 0, 10), class = ~sigma)
+                      )
+            )
+summary(fit2)
+brms::waic(fit2)
+```
+
+## stanコードを出力することもできる
+
+```{r}
+brms::make_stancode(mpg ~ wt * am,
+                    data = dat,
+                    prior = c(prior_string("normal(0, 10)", class = "b"),
+                              prior(student_t(3, 19, 10), class = Intercept),
+                              prior_(~student_t(3, 0, 10), class = ~sigma)
+                              )
+                    )
+```
+
+## plotしてみる
+
+plotの実態は`bayesplot::mcmc_combo()`をしているらしい
+
+各パラメータの事後分布とトレースプロットを表示する
+
+
+```{r}
+plot(fit)
+```
+
+bayesplotの設定とかをそのまま使えるので便利
+
+```{r}
+bayesplot::color_scheme_set("pink")
+plot(fit, combo = c("trace", "dens_overlay"))
+```
+
+## 主効果や交互作用効果を表示
+
+```{r}
+brms::marginal_effects(fit)
+```
+
+## 事後予測チェックも一撃である
+
+```{r}
+brms::pp_check(fit)
+brms::pp_check(fit, type = "error_hist")
+```
+
+# Generalized Linear Model
+
+## glm
+
+```{r}
+dat <- mtcars
+fit <- glm(cbind(am, 1 - am) ~ mpg + wt, family = "binomial", data = dat)
+summary(fit)
+```
+
+## brmでglm
+
+目的変数が2値なら'bernoulli'でもOKだが、glmに合わせて'binomial'で行う
+
+```{r}
+fit <- brms::brm(am | trials(1) ~ mpg + wt, family = "binomial", data = dat)
+#目的変数が2値の場合は、
+#fit <- brm(am ~ mpg + wt, family = "bernoulli", data = mtcars) でOK
+
+summary(fit)
+```
+
+
+## 主効果を確認する
+
+```{r}
+brms::marginal_effects(fit)
+```
+
+## ゼロ過剰ポアソン分布をモデリング
+
+```{r}
+set.seed(1234)
+dat <- data.frame(Y = c(rep(0, 746),
+                        rep(1, 142),
+                        rep(2, 142),
+                        rep(3, 154),
+                        rep(4, 23),
+                        rep(5, 22),
+                        rep(6, 9),
+                        rep(7, 66)
+                        )
+                  )
+dat$X <- 50 + 2.5*dat$Y + rnorm(n = nrow(dat), mean = 0, sd = 10)
+
+fit <- brm(Y ~ X, data = dat, family = "zero_inflated_poisson", seed = 1234)
+summary(fit)
+```
+
+## 事後予測チェック
+
+```{r}
+brms::pp_check(fit)
+```
+
+# Generalized Linear Mixed Model
+
+not yet
+
+# Bayesian Linear Mixed Models: Random Intercepts, Slopes, and Missing Data
+
+* https://willhipson.netlify.com/post/bayesian_mlm/bayesian_mlm/
+
+## data load
+
+* id : 生徒
+* occasion : 時間
+* read : 読解力のスコア
+* homecog : 
+
+```{r}
+curran_dat <- haven::read_sav("../data/CurranLong.sav") %>%
+  select(id, occasion, read, homecog) %>%
+  filter(complete.cases(.))
+```
+
+## Model 1 : One Random Effect, No Covariates
+
+```{r}
+read1 <- brm(data = curran_dat,
+             family = gaussian,
+             formula = read ~ 1 + (1 | id),
+             prior = c(prior(normal(0, 10), class = Intercept),
+                       prior(cauchy(0, 1), class = sd),
+                       prior(cauchy(0, 1), class = sigma)),
+             iter = 2000, warmup = 1000, chains = 4, cores = 4,
+             control = list(adapt_delta = .975, max_treedepth = 20),
+             seed = 190831)
+```
+
+```{r}
+set.seed(25)
+
+curran_dat %>%
+  bind_cols(as_tibble(fitted(read1))) %>%
+  group_by(id) %>%
+  nest() %>%
+  sample_n(6) %>%
+  unnest() %>%
+  ggplot() +
+  geom_point(aes(x = occasion, y = read), size = 4, alpha = .75, color = "dodgerblue2") +
+  geom_point(aes(x = occasion, y = Estimate), shape = 1, size = 4, stroke = 1.5) +
+  labs(x = "Assessment Period",
+       y = "Reading Ability",
+       title = "Model 1: One Random Effect, No Covariates",
+       subtitle = "Blue points are observed values. Black circles are fitted values.") +
+  scale_x_continuous(expand = c(.075, .075), breaks = 0:3) +
+  facet_wrap(~id, nrow = 1) +
+  theme_bw(base_size = 14) +
+  theme(plot.title = element_text(hjust = .5))
+```
+
+```{r}
+# 答え : 509番のユーザのEstimation
+res <- bind_cols(curran_dat, as_tibble(fitted(read1))) %>% filter(id == 509)
+print(unique(res$Estimate))
+
+# 1. モデルの固定効果を抜き出す
+print(brms::fixef(read1, summary = T)[1])
+
+# 2. 509番のユーザの ランダム切片を抜き出す
+aaa <- brms::ranef(read1, summary = T)
+print(aaa$id[,,1][row.names(aaa$id[,,1]) == "509"][1])
+
+# 1から2を足してみる -> Estimationと一致した！
+print(brms::fixef(read1, summary = T)[1]　+ aaa$id[,,1][row.names(aaa$id[,,1]) == "509"][1])
+
+# 4000個の生値を平均したやつであることを確かめ計算. あわねー。。。
+#bbb <- brms::ranef(read1, summary = F)
+#print(mean(bbb$id[,,1][colnames(bbb$id[,,1]) == "509"]))
+```
+
+## Model 2 : Two Random Effects, No Covariates
+
+```{r}
+read2 <- brm(data = curran_dat,
+             family = gaussian,
+             read ~ 1 + (1 | id) + (1 | occasion),
+             prior = c(prior(normal(0, 10), class = Intercept),
+                       prior(cauchy(0, 1), class = sd),
+                       prior(cauchy(0, 1), class = sigma)),
+             iter = 2000, warmup = 1000, chains = 4, cores = 4,
+             control = list(adapt_delta = .975, max_treedepth = 20),
+             seed = 190831)
+```
+
+```{r}
+# 答え : 509番のユーザのEstimation
+res <- bind_cols(curran_dat, as_tibble(fitted(read2))) %>% filter(id == 509)
+print(res$Estimate)
+
+# 1. モデルの固定効果を抜き出す
+print(brms::fixef(read2, summary = T)[1])
+
+# 2. 509番のユーザの idのランダム切片を抜き出す
+aaa <- brms::ranef(read2, summary = T)
+print(aaa$id[,,1][row.names(aaa$id[,,1]) == "509"][1])
+
+# 3. occasionのランダム切片を抜き出す
+print(aaa$occasion[,,1][,1])
+
+# 1から3を足してみる -> Estimationと一致した！
+print(brms::fixef(read2, summary = T)[1] + 
+      aaa$id[,,1][row.names(aaa$id[,,1]) == "509"][1] + 
+      aaa$occasion[,,1][,1])
+
+```
+
+
+```{r}
+set.seed(25)
+
+curran_dat %>%
+  bind_cols(as_tibble(fitted(read2))) %>%
+  group_by(id) %>%
+  nest() %>%
+  sample_n(6) %>%
+  unnest() %>%
+  ggplot() +
+  geom_point(aes(x = occasion, y = read), size = 4, alpha = .75, color = "dodgerblue2") +
+  geom_point(aes(x = occasion, y = Estimate), shape = 1, size = 4, stroke = 1.5) +
+  labs(x = "Assessment Period",
+       y = "Reading Ability",
+       title = "Model 2: Two Random Effects, No Covariates",
+       subtitle = "Blue points are observed values. Black circles are fitted values.") +
+  scale_x_continuous(expand = c(.075, .075), breaks = 0:3) +
+  facet_wrap(~id, nrow = 1) +
+  theme_bw(base_size = 14) +
+  theme(plot.title = element_text(hjust = .5))
+```
+
+## Model 3 : One Random Effect, One Covariate
+
+```{r}
+read3 <- brm(data = curran_dat,
+             family = gaussian,
+             read ~ 1 + occasion + (1 | id),
+             prior = c(prior(normal(0, 10), class = Intercept),
+                       prior(normal(0, 1), class = b),
+                       prior(cauchy(0, 1), class = sd),
+                       prior(cauchy(0, 1), class = sigma)),
+             iter = 2000, warmup = 1000, chains = 4, cores = 4,
+             control = list(adapt_delta = .975, max_treedepth = 20),
+             seed = 190831)
+```
+
+
+```{r}
+set.seed(25)
+
+curran_dat %>%
+  bind_cols(as_tibble(fitted(read3))) %>%
+  group_by(id) %>%
+  nest() %>%
+  sample_n(6) %>%
+  unnest() %>%
+  ggplot() +
+  geom_point(aes(x = occasion, y = read), size = 4, alpha = .75, color = "dodgerblue2") +
+  geom_point(aes(x = occasion, y = Estimate), shape = 1, size = 4, stroke = 1.5) +
+  labs(x = "Assessment Period",
+       y = "Reading Ability",
+       title = "Model 3: One Random Effect, One Covariate",
+       subtitle = "Blue points are observed values. Black circles are fitted values.") +
+  scale_x_continuous(expand = c(.075, .075), breaks = 0:3) +
+  facet_wrap(~id, nrow = 1) +
+  theme_bw(base_size = 14) +
+  theme(plot.title = element_text(hjust = .5))
+```
+
+
+## Model 4 : One Random Slope, One Covariate
+
+```{r}
+read4 <- brm(data = curran_dat,
+             family = gaussian,
+             read ~ 1 + occasion + (1 + occasion | id),
+             prior = c(prior(normal(0, 10), class = Intercept),
+                       prior(normal(0, 1), class = b),
+                       prior(cauchy(0, 1), class = sd),
+                       prior(cauchy(0, 1), class = sigma),
+                       prior(lkj_corr_cholesky(1.5), class = cor)),
+             iter = 2000, warmup = 1000, chains = 4, cores = 4,
+             control = list(adapt_delta = .975, max_treedepth = 20),
+             seed = 190831)
+```
+
+```{r}
+set.seed(25)
+
+curran_dat %>%
+  bind_cols(as_tibble(fitted(read4))) %>%
+  group_by(id) %>%
+  nest() %>%
+  sample_n(6) %>%
+  unnest() %>%
+  ggplot() +
+  geom_point(aes(x = occasion, y = read), size = 4, alpha = .75, color = "dodgerblue2") +
+  geom_point(aes(x = occasion, y = Estimate), shape = 1, size = 4, stroke = 1.5) +
+  labs(x = "Assessment Period",
+       y = "Reading Ability",
+       title = "Model 4: One Random Slope, One Covariate",
+       subtitle = "Blue points are observed values. Black circles are fitted values.") +
+  scale_x_continuous(expand = c(.075, .075), breaks = 0:3) +
+  facet_wrap(~id, nrow = 1) +
+  theme_bw(base_size = 14) +
+  theme(plot.title = element_text(hjust = .5))
+```
+

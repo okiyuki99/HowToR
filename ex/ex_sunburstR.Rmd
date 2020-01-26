@@ -1,0 +1,89 @@
+---
+title: "Ex sunburstR"
+author: "gingi99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* sunburstRを触ってみた
+* 参考
+    * [timelyportfolio/sunburstR](https://github.com/timelyportfolio/sunburstR)
+
+# libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+library(treemap)
+library(d3r)
+library(sunburstR) #devtools::install_github("timelyportfolio/sunburstR")
+print(packageVersion("sunburstR"))
+```
+
+# Data Prep
+
+```{r}
+# read in sample visit-sequences.csv data provided in source
+#   https://gist.github.com/kerryrodden/7090426#file-visit-sequences-csv
+sequence_data <- read.csv(paste0("https://gist.githubusercontent.com/kerryrodden/7090426/raw/ad00fcf422541f19b70af5a8a4c5e1460254e6be/visit-sequences.csv"),
+                          header=F,
+                          stringsAsFactors = FALSE
+)
+
+str(sequence_data)
+```
+
+# Visualization
+
+```{r}
+sunburst(sequence_data)
+```
+
+# tree map から渡す
+
+* https://github.com/timelyportfolio/sunburstR/blob/master/inst/examples/example_treemap.R
+* これ便利
+
+```{r}
+# use example from ?treemap::treemap
+data(GNI2014)
+tm <- treemap(GNI2014,
+          index=c("continent", "iso3"),
+          vSize="population",
+          vColor="continent",
+          type="index")
+
+tm_nest <- d3r::d3_nest(
+  tm$tm[,c("continent", "iso3", "vSize", "color")],
+  value_cols = c("vSize", "color")
+)
+
+sunburst(
+    data = tm_nest,
+    valueField = "vSize",
+    count = TRUE,
+    # to avoid double counting with pre-summed trees
+    # use sumNodes = FALSE
+    sumNodes = FALSE,
+    colors = htmlwidgets::JS("function(d){return d3.select(this).datum().data.color;}"),
+    withD3 = TRUE
+  )
+```
+
+

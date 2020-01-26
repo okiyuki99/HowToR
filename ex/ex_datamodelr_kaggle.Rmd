@@ -1,0 +1,111 @@
+---
+title: "Datamodelr and Show Data"
+author: "gingi99"
+date: '`r Sys.time()`'
+output:
+  rmdformats::html_clean:
+    number_sections: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## Settings
+
+```{r, message=F, warning=F}
+library(dplyr)
+library(readr)
+library(purrr)
+library(knitr)
+
+library(datamodelr)
+
+options(scipen=10, readr.num_columns = 0)
+opts_chunk$set(
+  #out.width = '\\maxwidth'
+  highlight = T
+)
+```
+
+## Data Prep
+
+```{r}
+filenames <- c("Cities","Conferences","ConferenceTourneyGames","Events_2010","GameCities","MasseyOrdinals","NCAATourneyCompactResults", "NCAATourneyDetailedResults","NCAATourneySeedRoundSlots", "NCAATourneySeeds", "NCAATourneySlots", "Players_2010","RegularSeasonCompactResults","RegularSeasonDetailedResults","Seasons","SecondaryTourneyCompactResults","SecondaryTourneyTeams","TeamCoaches","TeamConferences","Teams","TeamSpellings")
+
+data <- lapply(filenames, function(x){read_csv(paste0("/mnt/data/mens-machine-learning-competition-2019/",x,".csv"))})
+names(data) <- filenames
+dm_kaggle <- dm_from_data_frames(data)
+```
+
+## Data Check
+
+```{r}
+map(data, str)
+```
+
+# Schema Card with primary keys
+
+**I'm confused... I have no confidence.**
+
+```{r, fig.width=20, fig.height=10}
+dm_kaggle_primary_keys<- dm_add_references(
+  dm_kaggle,
+  ConferenceTourneyGames$Season == Seasons$Season,
+  ConferenceTourneyGames$ConfAbbrev == Conferences$ConfAbbrev,
+  Events_2010$Season == Seasons$Season,
+  GameCities$CityID == Cities$CityID,
+  GameCities$Season == Seasons$Season,
+  NCAATourneyCompactResults$Season == Seasons$Season,
+  NCAATourneyDetailedResults$Season == Seasons$Season,
+  NCAATourneySeedRoundSlots$Seed == NCAATourneySeeds$Seed,
+  NCAATourneySeeds$Season == Seasons$Season,
+  NCAATourneySeeds$TeamID == Teams$TeamID,
+  NCAATourneySlots$Season == Seasons$Season,
+  Players_2010$Season == Seasons$Season,
+  Players_2010$TeamID == Teams$TeamID,
+  RegularSeasonCompactResults$Season == Seasons$Season,
+  RegularSeasonDetailedResults$Season == Seasons$Season,
+  SecondaryTourneyCompactResults$Season == Seasons$Season,
+  MasseyOrdinals$TeamID == Teams$TeamID,
+  MasseyOrdinals$Season == Seasons$Season,
+  SecondaryTourneyTeams$Season == Seasons$Season,
+  SecondaryTourneyTeams$TeamID == Teams$TeamID,
+  TeamConferences$ConfAbbrev == Conferences$ConfAbbrev,
+  TeamConferences$TeamID == Teams$TeamID,
+  TeamConferences$Season == Seasons$Season,
+  TeamCoaches$Season == Seasons$Season,
+  TeamCoaches$TeamID == Teams$TeamID,
+  TeamSpellings$TeamID == Teams$TeamID
+)
+graph <- dm_create_graph(dm_kaggle_primary_keys, rankdir = "BT", col_attr = c("column", "type"), edge_attrs = "dir = both, arrowtail = crow, arrowhead = odiamond", columnArrows = F)
+dm_render_graph(graph)
+```
+
+# Show Data {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+out <- NULL
+for(i in 1:length(data)) {
+  tab_name <- names(data[i])
+  message <- paste0("ncol: ", ncol(data[[i]]))
+
+  tab_section <- paste0(
+    "\n## ", tab_name, "\n",
+    message,"\n",
+    "\n\n```{r}\n",
+    "knitr::kable(data[[",i,"]] %>% head(10))\n",
+    "\n\n```\n\n"
+  )
+
+  out <- c(out, knit_expand(text = tab_section))
+}
+```
+`r paste(knit(text = out), collapse = '\n')`
