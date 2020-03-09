@@ -1,0 +1,99 @@
+---
+title: "ex estatapi"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Summary 
+
+* eStat APIを試す
+* https://qiita.com/nozma/items/f88f5cc60ab63461deae
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r, message=F, warning=F}
+options(scipen=10)
+
+library(tidyverse)
+library(httr)
+library(listviewer)
+```
+
+## Load appId
+
+```{r}
+appId <- Sys.getenv("ESTAT_API_APPID")
+```
+
+# STEP 1 統計表IDを確認する
+
+たまに失敗する
+
+```{r}
+res <- httr::GET(
+  url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsList",
+  query = list(
+    appId = appId,
+    searchWord = "普通貿易統計"
+  )
+)
+
+res_content <- httr::content(res)
+#listviewer::jsonedit(res_content)
+```
+
+atidを使って次のstepでデータをダウンロードする
+
+```{r}
+df_meta <- data.frame(
+  atid = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "@id"),
+  STATISTICS_NAME = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "STATISTICS_NAME"),
+  TITLE = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "TITLE"),
+  SURVEY_DATE = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "SURVEY_DATE"),
+  OPEN_DATE = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "OPEN_DATE"),
+  UPDATED_DATE = purrr::map_chr(res_content$GET_STATS_LIST$DATALIST_INF$TABLE_INF, "UPDATED_DATE"),
+  stringsAsFactors = F
+)
+```
+
+## Step 2  統計データ取得
+
+ここから
+
+```{r}
+res <- httr::GET(
+  url = "https://api.e-stat.go.jp/rest/3.0/app/getSimpleStatsData",
+  query = list(
+    appId = appId,
+    statsDataId = "0003313974"
+  )
+)
+res_content <- httr::content(res)
+```
+
+```{r}
+aaa <- stringr::str_replace(res_content, '(?s).*"VALUE"\n', '') %>% readr::read_csv()
+```
+
+
+
+
+
