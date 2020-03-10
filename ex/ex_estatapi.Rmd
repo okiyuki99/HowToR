@@ -33,7 +33,10 @@ knit: (function(inputFile, encoding) {
 options(scipen=10)
 
 library(tidyverse)
+library(knitr)
 library(httr)
+
+library(kableExtra)
 library(listviewer)
 ```
 
@@ -43,7 +46,7 @@ library(listviewer)
 appId <- Sys.getenv("ESTAT_API_APPID")
 ```
 
-# STEP 1 統計表IDを確認する
+# Step 1 統計表IDを確認する
 
 たまに失敗する
 
@@ -74,26 +77,110 @@ df_meta <- data.frame(
 )
 ```
 
-## Step 2  統計データ取得
+# Step 2  統計データ取得
+
+```{r}
+df_meta %>%
+  filter(atid %in% c("0003334003")) %>%
+  pull(TITLE) 
+```
+
+```{r}
+posi <- 1
+df <- data.frame()
+while(TRUE){
+  res <- httr::GET(
+    # url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData",
+    url = "https://api.e-stat.go.jp/rest/3.0/app/getSimpleStatsData",
+    query = list(
+      appId = appId,
+      statsDataId = "0003334003",
+      startPosition = (posi - 1) * 100000 + 1,
+      limit = 100000 # 10万まで,
+    )
+  )
+  res_content <- httr::content(res)
+  tmp <- stringr::str_replace(res_content, '(?s).*"VALUE"\n', '') %>% 
+    readr::read_csv(col_types = cols(cat01_code = col_character(), 
+                                     cat02_code = col_character(),
+                                     cat03_code = col_character(), 
+                                     unit = col_character(), 
+                                     value = col_character()))
+  print(paste0("StartPosition:", posi, " Records:", nrow(tmp)))
+  df <- bind_rows(df, tmp)
+  if(nrow(tmp) < 100000){
+    break
+  }
+  posi <- posi + 1
+}
+```
+
+# Data column check
+
+## cat01_code
+
+```{r}
+df_cat01_code_uniq <- df %>% distinct(cat01_code, `概況品目(輸入)`)
+df_cat01_code_uniq %>% 
+  kable(align = "r", caption = paste0("# records : ", nrow(df_cat01_code_uniq))) %>% 
+  kable_styling(c("striped","bordered"))
+```
+
+## cat02_code
+
+```{r}
+df_cat02_code_uniq <- df %>% distinct(cat02_code, `概況品目表の数量・金額`)
+df_cat02_code_uniq %>% 
+  kable(align = "r", caption = paste0("# records : ", nrow(df_cat02_code_uniq))) %>% 
+  kable_styling(c("striped","bordered"))
+```
+
+
+## cat03_code
+
+```{r}
+df_cat03_code_uniq <- df %>% distinct(cat03_code, `税関`)
+df_cat03_code_uniq %>% 
+  kable(align = "r", caption = paste0("# records : ", nrow(df_cat03_code_uniq))) %>% 
+  kable_styling(c("striped","bordered"))
+```
+
+## area_code
+
+```{r}
+df_area_code_uniq <- df %>% distinct(area_code, `国`)
+df_area_code_uniq %>% 
+  kable(align = "r", caption = paste0("# records : ", nrow(df_area_code_uniq))) %>% 
+  kable_styling(c("striped","bordered"))
+```
+
+
+## unit
+
+```{r}
+df_unit_uniq <- df %>% distinct(unit)
+df_unit_uniq %>% 
+  kable(align = "r", caption = paste0("# records : ", nrow(df_unit_uniq))) %>% 
+  kable_styling(c("striped","bordered"))
+```
+
+## value
+
+MTとかは単位っぽいんだけど、valueずれてる？
+https://www.customs.go.jp/toukei/sankou/howto/faq.htm#14
 
 ここから
 
 ```{r}
-res <- httr::GET(
-  url = "https://api.e-stat.go.jp/rest/3.0/app/getSimpleStatsData",
-  query = list(
-    appId = appId,
-    statsDataId = "0003313974"
-  )
-)
-res_content <- httr::content(res)
+df %>%
+  filter(value != "0") -> tmp
+tmp %>%
+  group_by(value) %>%
+  dplyr::summarise(count = n()) -> aaa
+
+df %>%
+  filter(value == "ＭＴ") -> bbb
 ```
-
-```{r}
-aaa <- stringr::str_replace(res_content, '(?s).*"VALUE"\n', '') %>% readr::read_csv()
-```
-
-
 
 
 
