@@ -1,0 +1,129 @@
+---
+title: "Ex Causal Kouka Kensho Nyumon"
+author: "okiyuki99"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float: true
+    fig_width: 7
+    fig_height: 4.5
+    fig_caption: true
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+    code_download: true
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_dir = "../docs/") })
+---
+
+# Ref
+
+- 効果検証入門
+- 計量経済学応用 マッチング https://yukiyanai.github.io/jp/classes/econometrics2/contents/R/matching.html
+
+# Preparations {.tabset .tabset-fade .tabset-pills}
+
+## libraries
+
+```{r}
+library(tidyverse)
+library(broom)
+
+library(MatchIt)
+library(cobalt)
+```
+
+
+## Data load
+
+```{r}
+# email data
+email_data <- readr::read_csv("http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv")
+```
+
+## Data create
+
+```{r}
+male_df <- email_data %>%
+  filter(segment != "Womens E-Mail") %>% # 女性向けメールが配信されたデータを削除
+  mutate(treatment = ifelse(segment == "Mens E-Mail", 1, 0)) # 介入を表すtreatment変数を追加
+
+# (5) セレクションバイアスのあるデータを作成
+## seedを固定する
+set.seed(1)
+
+## 条件に反応するサンプルの量を半分にする
+obs_rate_c <- 0.5
+obs_rate_t <- 0.5
+
+## バイアスのあるデータを作成
+biased_data <- male_df %>%
+  mutate(obs_rate_c = ifelse( (history > 300) | (recency < 6) | (channel == "Multichannel"), obs_rate_c, 1),
+         obs_rate_t = ifelse( (history > 300) | (recency < 6) | (channel == "Multichannel"), 1, obs_rate_t),
+         random_number = runif(n = NROW(male_df))) %>%
+  filter( (treatment == 0 & random_number < obs_rate_c ) |
+            (treatment == 1 & random_number < obs_rate_t) )
+```
+
+
+```{r}
+print(head(male_df))
+```
+
+
+# Propensity Score
+
+割付確率を出す
+
+```{r}
+ps_model <- glm(data = biased_data,
+                formula = treatment ~ recency + history + channel,
+                family = binomial)
+```
+
+# Machiching by propensity score
+
+## Exec
+
+```{r}
+## 傾向スコアを利用したマッチング
+m_near <- matchit(formula = treatment ~ recency + history + channel,
+                  data = biased_data,
+                  method = "nearest",
+                  replace = TRUE)
+```
+
+## Balanceの確認
+
+```{r}
+summary(m_near, standardize = TRUE)
+
+plot(m_near, type = "QQ", interactive = FALSE)
+
+#cobalt::love.plot(m_near, thresholds = 0.1) # 便利
+```
+
+
+## 効果推定
+
+```{r}
+## マッチング後のデータを作成
+matched_data <- match.data(m_near)
+
+## マッチング後のデータで効果の推定
+PSM_result <- lm(data = matched_data,
+                 formula = spend ~ treatment) %>%
+  tidy()
+
+print(PSM_result)
+```
+
+
+
+
+
+

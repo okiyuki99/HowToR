@@ -28,6 +28,7 @@ We can see html reports built by ```knitr + Rmd``` in the following url : http:/
 * [Study of KDD2017 Peeking](http://okiyuki99.github.io/HowToR/ex_kdd2017_peeking.html)
 * [Combine Standard deviation over N groups](http://okiyuki99.github.io/HowToR/ex_sd_combine.html)
 * [tidy statistical test](http://okiyuki99.github.io/HowToR/ex_tidy_test.html)
+* [Kouka Kensho Nyumon](http://okiyuki99.github.io/HowToR/ex_causal_kouka_kensho_nyumon.html)
 
 ### Model
 * [Example of Prophet](http://okiyuki99.github.io/HowToR/ex_prophet.html)
